@@ -1,9 +1,5 @@
 import tensorflow as tf
 import time
-from tensorflow.keras.initializers import RandomUniform
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.layers import Dense, Reshape
-from tensorflow.keras import Sequential
 from BSDE_functions import BSDE_functions
 
 
@@ -75,9 +71,9 @@ class BSDE_Solver:
 
         # Set optimizers for each loss function
         self.optimizers_pi = [
-            Adam(learning_rate=0.001) for _ in range(self.N)
+            tf.keras.optimizers.Adam(learning_rate=1e-2) for _ in range(self.N)
         ]
-        self.optimizer_gamma = Adam(learning_rate=0.01)
+        self.optimizer_gamma = tf.keras.optimizers.Adam(learning_rate=1e-1)
 
     def neural_network(self, isgamma=False):
         """
@@ -92,7 +88,7 @@ class BSDE_Solver:
         Returns
         -------
         nn : tf.keras.Sequential
-            The created neural network, which consists of 4 Dense layers with
+            The created neural network, which consists of 6 Dense layers with
             ReLU activation for the first three layers and uniform weight
             initialization.
         """
@@ -101,20 +97,33 @@ class BSDE_Solver:
         output_size = 2 if isgamma else 1
 
         # Create the neural network with uniform weight initialization
-        nn = Sequential([
-            Dense(12,
-                  activation='relu',
-                  kernel_initializer=RandomUniform(minval=-0.1, maxval=0.1),
-                  input_shape=(2, 1)),
-            Dense(12,
-                  activation='relu',
-                  kernel_initializer=RandomUniform(minval=-0.1, maxval=0.1)),
-            Dense(12,
-                  activation='relu',
-                  kernel_initializer=RandomUniform(minval=-0.1, maxval=0.1)),
-            Dense(output_size,
-                  kernel_initializer=RandomUniform(minval=-0.1, maxval=0.1)),
-            Reshape((2, output_size))
+        nn = tf.keras.Sequential([
+            tf.keras.layers.Dense(
+                12, activation='relu',
+                kernel_initializer=tf.keras.initializers.RandomUniform(
+                    minval=-0.1, maxval=0.1),
+                input_shape=(2, 1)),
+            tf.keras.layers.Dense(
+                12, activation='relu',
+                kernel_initializer=tf.keras.initializers.RandomUniform(
+                    minval=-0.1, maxval=0.1)),
+            tf.keras.layers.Dense(
+                12, activation='relu',
+                kernel_initializer=tf.keras.initializers.RandomUniform(
+                    minval=-0.1, maxval=0.1)),
+            tf.keras.layers.Dense(
+                12, activation='relu',
+                kernel_initializer=tf.keras.initializers.RandomUniform(
+                    minval=-0.1, maxval=0.1)),
+            tf.keras.layers.Dense(
+                12, activation='relu',
+                kernel_initializer=tf.keras.initializers.RandomUniform(
+                    minval=-0.1, maxval=0.1)),
+            tf.keras.layers.Dense(
+                output_size,
+                kernel_initializer=tf.keras.initializers.RandomUniform(
+                    minval=-0.1, maxval=0.1)),
+            tf.keras.layers.Reshape((2, output_size))
         ])
 
         return nn
@@ -140,9 +149,22 @@ class BSDE_Solver:
 
         # Record the start time of the iteration step
         start_time = time.time()
+        print("Training in progress")
+        print("-"*50)
 
         # Iteration steps
         for iteration_step in range(1, self.iteration_steps + 1):
+
+            # Modify learning rates at specified intervals
+            if iteration_step % (self.iteration_steps // 3) == 0:
+
+                #self.optimizer_gamma.learning_rate.assign(
+                #    self.optimizer_gamma.learning_rate.numpy() / 10
+                #)
+                for i in range(self.N):
+                    self.optimizers_pi[i].learning_rate.assign(
+                        (self.optimizers_pi[i].learning_rate.numpy() / 10)
+                    )
 
             # Optimising the Gamma Parameters & V_0, Z_0
             with tf.GradientTape() as tape:
@@ -293,5 +315,10 @@ class BSDE_Solver:
         # Store the bsde and control losses
         self.bsde_losses = bsde_losses
         self.control_losses = control_losses
+
+        print("Training finished")
+        return None
+
+    def simulate_V(self):
 
         return None

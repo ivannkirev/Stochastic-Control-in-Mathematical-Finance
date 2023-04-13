@@ -71,11 +71,11 @@ class BSDE_Solver:
 
         # Set optimizers for each loss function
         self.optimizers_pi = [
-            tf.keras.optimizers.Adam(learning_rate=1e-2) for _ in range(self.N)
+            tf.keras.optimizers.Adam(learning_rate=1e-3) for _ in range(self.N)
         ]
-        self.optimizer_gamma = tf.keras.optimizers.Adam(learning_rate=1e-1)
+        self.optimizer_gamma = tf.keras.optimizers.Adam(learning_rate=1e-2)
 
-    def neural_network(self, isgamma=False):
+    def neural_network(self, hidden_layers=3, isgamma=False):
         """
         Create a neural network with uniform weight initialization.
 
@@ -103,28 +103,20 @@ class BSDE_Solver:
                 kernel_initializer=tf.keras.initializers.RandomUniform(
                     minval=-0.1, maxval=0.1),
                 input_shape=(2, 1)),
-            tf.keras.layers.Dense(
-                12, activation='relu',
-                kernel_initializer=tf.keras.initializers.RandomUniform(
-                    minval=-0.1, maxval=0.1)),
-            tf.keras.layers.Dense(
-                12, activation='relu',
-                kernel_initializer=tf.keras.initializers.RandomUniform(
-                    minval=-0.1, maxval=0.1)),
-            tf.keras.layers.Dense(
-                12, activation='relu',
-                kernel_initializer=tf.keras.initializers.RandomUniform(
-                    minval=-0.1, maxval=0.1)),
-            tf.keras.layers.Dense(
-                12, activation='relu',
-                kernel_initializer=tf.keras.initializers.RandomUniform(
-                    minval=-0.1, maxval=0.1)),
-            tf.keras.layers.Dense(
-                output_size,
-                kernel_initializer=tf.keras.initializers.RandomUniform(
-                    minval=-0.1, maxval=0.1)),
-            tf.keras.layers.Reshape((2, output_size))
         ])
+
+        # Add `hidden_layers` - 1 hidden layers with ReLU activation
+        for i in range(hidden_layers - 1):
+            nn.add(tf.keras.layers.Dense(
+                12, activation='relu',
+                kernel_initializer=tf.keras.initializers.RandomUniform(
+                    minval=-0.1, maxval=0.1)))
+
+        nn.add(tf.keras.layers.Dense(
+            output_size,
+            kernel_initializer=tf.keras.initializers.RandomUniform(
+                minval=-0.1, maxval=0.1)))
+        nn.add(tf.keras.layers.Reshape((2, output_size)))
 
         return nn
 
@@ -158,12 +150,12 @@ class BSDE_Solver:
             # Modify learning rates at specified intervals
             if iteration_step % (self.iteration_steps // 3) == 0:
 
-                #self.optimizer_gamma.learning_rate.assign(
-                #    self.optimizer_gamma.learning_rate.numpy() / 10
-                #)
+                self.optimizer_gamma.learning_rate.assign(
+                    self.optimizer_gamma.learning_rate.numpy() / 10
+                )
                 for i in range(self.N):
                     self.optimizers_pi[i].learning_rate.assign(
-                        (self.optimizers_pi[i].learning_rate.numpy() / 10)
+                        self.optimizers_pi[i].learning_rate.numpy()
                     )
 
             # Optimising the Gamma Parameters & V_0, Z_0
@@ -304,7 +296,7 @@ class BSDE_Solver:
 
             if display_steps:
                 # Print the current iteration step and elapsed time
-                if iteration_step % 500 == 0:
+                if iteration_step % 100 == 0:
 
                     # Record the end time of the iteration step
                     end_time = time.time()

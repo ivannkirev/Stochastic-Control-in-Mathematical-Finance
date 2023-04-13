@@ -2,21 +2,20 @@ import tensorflow as tf
 import matplotlib.pyplot as plt
 from BSDE_Solver import BSDE_Solver
 
-print(tf.Variable([[3.0, 0.0], [0.0, 3.0]]))
 # Set parameters
 parameters = {
-    "Q": tf.Variable([[3.0, 0.0], [0.0, 3.0]]),
+    "Q": tf.constant([[3.0, 0.0], [0.0, 3.0]]),
     'R': tf.constant([[2.0, 0.0], [0.0, 2.0]]),
-    'S': tf.Variable([[0.0, 0.0], [0.0, 0.0]]),
-    'A': tf.Variable([[0.5, 0.3], [0.3, 0.5]]),
-    'B': tf.Variable([[0.2, 0.1], [0.1, 0.2]]),
-    'C': tf.Variable([[0.3, 0.1], [0.1, 0.3]]),
-    'D': tf.Variable([[0.1, 0.2], [0.2, 0.1]]),
+    'S': tf.constant([[0.0, 0.0], [0.0, 0.0]]),
+    'A': tf.constant([[0.5, 0.3], [0.3, 0.5]]),
+    'B': tf.constant([[0.2, 0.1], [0.1, 0.2]]),
+    'C': tf.constant([[0.3, 0.1], [0.1, 0.3]]),
+    'D': tf.constant([[0.1, 0.2], [0.2, 0.1]]),
     'G': tf.constant([[2.0, 1.0], [3.0, 2.0]]),
     'L': tf.constant([[0.3], [0.5]]),
     'N': 10,
     'batch_size': 50,
-    'iteration_steps': 10000,
+    'iteration_steps': 1500,
     'x_0': tf.Variable([[0.4], [0.5]])
 }
 

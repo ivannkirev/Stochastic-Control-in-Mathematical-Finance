@@ -4,19 +4,21 @@ from BSDE_Solver import BSDE_Solver
 
 # Set parameters
 parameters = {
-    "Q": tf.constant([[3.0, 0.0], [0.0, 3.0]]),
-    'R': tf.constant([[2.0, 0.0], [0.0, 2.0]]),
+    "Q": tf.constant([[0.0, 0.0], [0.0, 0.0]]),
+    'R': tf.constant([[0.0, 0.0], [0.0, 0.0]]),
     'S': tf.constant([[0.0, 0.0], [0.0, 0.0]]),
     'A': tf.constant([[0.5, 0.3], [0.3, 0.5]]),
     'B': tf.constant([[0.2, 0.1], [0.1, 0.2]]),
     'C': tf.constant([[0.3, 0.1], [0.1, 0.3]]),
     'D': tf.constant([[0.1, 0.2], [0.2, 0.1]]),
-    'G': tf.constant([[2.0, 1.0], [3.0, 2.0]]),
+    'G': tf.constant([[0.2, 0.4], [0.4, 0.2]]),
     'L': tf.constant([[0.3], [0.5]]),
-    'N': 10,
-    'batch_size': 50,
-    'iteration_steps': 1500,
-    'x_0': tf.Variable([[0.4], [0.5]])
+    'N': 20,
+    'batch_size': 100,
+    'iteration_steps': 2000,
+    'x_0': tf.Variable([[0.3], [0.1]]),
+    'lr_gamma': 1e-2,
+    'lr_pi': 1e-3
 }
 
 # Define solver with the parameters

@@ -50,16 +50,20 @@ class BSDE_Solver:
         # Initialise X, V, Z
         self.x_0 = parameters['x_0']
         self.V_0 = tf.Variable(tf.random.uniform((1, 1),
-                                                 minval=-0.1,
-                                                 maxval=0.1))
+                                                 minval=-0.5,
+                                                 maxval=0.5))
         self.Z_0 = tf.Variable(tf.random.uniform((2, 1),
-                                                 minval=-0.1,
-                                                 maxval=0.1))
+                                                 minval=-0.5,
+                                                 maxval=0.5))
 
         # Set batch size, number of iterations and N
         self.batch_size = parameters['batch_size']
         self.iteration_steps = parameters['iteration_steps']
         self.N = parameters['N']
+
+        # Set learning rates
+        self.lr_pi = parameters['lr_pi']
+        self.lr_gamma = parameters['lr_gamma']
 
         # Create N neural networks for pi and for gamma
         self.pi_networks = [
@@ -71,9 +75,9 @@ class BSDE_Solver:
 
         # Set optimizers for each loss function
         self.optimizers_pi = [
-            tf.keras.optimizers.Adam(learning_rate=1e-3) for _ in range(self.N)
+            tf.keras.optimizers.Adam(self.lr_pi) for _ in range(self.N)
         ]
-        self.optimizer_gamma = tf.keras.optimizers.Adam(learning_rate=1e-2)
+        self.optimizer_gamma = tf.keras.optimizers.Adam(self.lr_gamma)
 
     def neural_network(self, hidden_layers=3, isgamma=False):
         """
@@ -110,12 +114,12 @@ class BSDE_Solver:
             nn.add(tf.keras.layers.Dense(
                 12, activation='relu',
                 kernel_initializer=tf.keras.initializers.RandomUniform(
-                    minval=-0.1, maxval=0.1)))
+                    minval=-0.5, maxval=0.5)))
 
         nn.add(tf.keras.layers.Dense(
             output_size,
             kernel_initializer=tf.keras.initializers.RandomUniform(
-                minval=-0.1, maxval=0.1)))
+                minval=-0.5, maxval=0.5)))
         nn.add(tf.keras.layers.Reshape((2, output_size)))
 
         return nn
@@ -148,15 +152,15 @@ class BSDE_Solver:
         for iteration_step in range(1, self.iteration_steps + 1):
 
             # Modify learning rates at specified intervals
-            if iteration_step % (self.iteration_steps // 3) == 0:
+            # if iteration_step % 1000 == 0:
 
-                self.optimizer_gamma.learning_rate.assign(
-                    self.optimizer_gamma.learning_rate.numpy() / 10
-                )
-                for i in range(self.N):
-                    self.optimizers_pi[i].learning_rate.assign(
-                        self.optimizers_pi[i].learning_rate.numpy()
-                    )
+            #    self.optimizer_gamma.learning_rate.assign(
+            #        self.optimizer_gamma.learning_rate.numpy() / 10
+            #    )
+            #    for i in range(self.N):
+            #        self.optimizers_pi[i].learning_rate.assign(
+            #            self.optimizers_pi[i].learning_rate.numpy() / 10
+            #        )
 
             # Optimising the Gamma Parameters & V_0, Z_0
             with tf.GradientTape() as tape:
@@ -236,7 +240,9 @@ class BSDE_Solver:
                 # Define trainable parameters
                 trainable_params = [0 for _ in range(self.N)]
                 for i in range(self.N):
-                    trainable_params[i] = self.pi_networks[i].trainable_weights
+                    trainable_params[i] = (
+                        self.pi_networks[i].trainable_weights
+                    )
 
                 # Initialize X
                 X = tf.tile(
@@ -268,12 +274,8 @@ class BSDE_Solver:
                     # Compute loss_i
                     losses[i] += (
                         tf.reduce_mean(
-                            tf.reduce_sum(
-                                    tf.square(
-                                        self.functions.D_F(X, pi, Z, gamma)
-                                    ),
-                                    axis=1,
-                                    keepdims=True
+                            tf.square(
+                                self.functions.D_F(X, pi, Z, gamma)
                             )
                         )
                     )

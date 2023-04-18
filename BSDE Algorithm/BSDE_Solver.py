@@ -104,8 +104,7 @@ class BSDE_Solver:
         nn = tf.keras.Sequential([
             tf.keras.layers.Dense(
                 12, activation='relu',
-                kernel_initializer=tf.keras.initializers.RandomUniform(
-                    minval=-0.1, maxval=0.1),
+                kernel_initializer=tf.keras.initializers.RandomUniform(),
                 input_shape=(2, 1)),
         ])
 
@@ -113,13 +112,11 @@ class BSDE_Solver:
         for i in range(hidden_layers - 1):
             nn.add(tf.keras.layers.Dense(
                 12, activation='relu',
-                kernel_initializer=tf.keras.initializers.RandomUniform(
-                    minval=-0.5, maxval=0.5)))
+                kernel_initializer=tf.keras.initializers.RandomUniform()))
 
         nn.add(tf.keras.layers.Dense(
             output_size,
-            kernel_initializer=tf.keras.initializers.RandomUniform(
-                minval=-0.5, maxval=0.5)))
+            kernel_initializer=tf.keras.initializers.RandomUniform()))
         nn.add(tf.keras.layers.Reshape((2, output_size)))
 
         return nn
@@ -152,15 +149,15 @@ class BSDE_Solver:
         for iteration_step in range(1, self.iteration_steps + 1):
 
             # Modify learning rates at specified intervals
-            # if iteration_step % 1000 == 0:
+            if iteration_step % 600 == 0:
 
-            #    self.optimizer_gamma.learning_rate.assign(
-            #        self.optimizer_gamma.learning_rate.numpy() / 10
-            #    )
-            #    for i in range(self.N):
-            #        self.optimizers_pi[i].learning_rate.assign(
-            #            self.optimizers_pi[i].learning_rate.numpy() / 10
-            #        )
+                self.optimizer_gamma.learning_rate.assign(
+                    self.optimizer_gamma.learning_rate.numpy() / 10
+                )
+                for i in range(self.N):
+                    self.optimizers_pi[i].learning_rate.assign(
+                        self.optimizers_pi[i].learning_rate.numpy() / 10
+                    )
 
             # Optimising the Gamma Parameters & V_0, Z_0
             with tf.GradientTape() as tape:
@@ -214,8 +211,7 @@ class BSDE_Solver:
                 loss_1 = tf.reduce_mean(
                     tf.square(V + self.functions.g(X)) +
                     0.5 * tf.reduce_sum(tf.square(Z + self.functions.D_g(X)),
-                                        axis=1,
-                                        keepdims=True)
+                                        axis=1)
                 )
 
                 # Store BSDE loss from this iteration step
@@ -274,8 +270,11 @@ class BSDE_Solver:
                     # Compute loss_i
                     losses[i] += (
                         tf.reduce_mean(
-                            tf.square(
-                                self.functions.D_F(X, pi, Z, gamma)
+                            tf.reduce_sum(
+                                tf.square(
+                                    self.functions.D_F(X, pi, Z, gamma)
+                                ),
+                                axis=1
                             )
                         )
                     )
@@ -290,8 +289,8 @@ class BSDE_Solver:
                 self.optimizers_pi[i].apply_gradients(zip(gradients[i],
                                                           trainable_params[i]))
 
-                # Compute the loss of the iteration as the sum of the losses
-                loss_2 += losses[i]
+            # Compute the loss of the iteration as the sum of the losses
+            loss_2 = tf.reduce_mean(tf.stack(losses))
 
             # Add the loss from this iteration to the list
             control_losses.append(loss_2)

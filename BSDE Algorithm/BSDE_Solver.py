@@ -2,6 +2,7 @@ import tensorflow as tf
 import time
 from BSDE_functions import BSDE_functions
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 class BSDE_Solver:
@@ -206,7 +207,7 @@ class BSDE_Solver:
         # Compute the loss using the last values of X, V, Z
         loss_1 = tf.reduce_mean(
             tf.square(V + self.functions.g(X)) +
-            0.5 * tf.reduce_sum(tf.square(Z + self.functions.D_g(X)),
+            0.9 * tf.reduce_sum(tf.square(Z + self.functions.D_g(X)),
                                 axis=1)
         )
 
@@ -276,6 +277,59 @@ class BSDE_Solver:
 
         return losses
 
+    def simulate(self):
+
+        Xs = np.zeros(shape=(self.N+1, 2, 1))
+        Vs = np.zeros(shape=(self.N+1, 1, 1))
+        Zs = np.zeros(shape=(self.N+1, 2, 1))
+
+        # Initialize X, V and Z
+        X = tf.tile(
+            tf.expand_dims(self.x_0, 0), [1, 1, 1])
+        V = tf.tile(
+            tf.expand_dims(self.V_0, 0), [1, 1, 1])
+        Z = tf.tile(
+            tf.expand_dims(self.Z_0, 0), [1, 1, 1])
+
+        dW = (
+            tf.math.sqrt(1 / self.N) *
+            tf.random.normal(shape=(self.N, 1))
+        )
+        # Perform Euler-Maruyama scheme
+        for i in range(self.N):
+
+            Xs[i] = X[0].numpy()
+            Vs[i] = V[0][0][0].numpy()
+            Zs[i] = Z[0].numpy()
+
+            # Compute dW_i
+            dW_i = tf.reshape(dW[i], (1, 1, 1))
+
+            # Compute pi_i and gamma_i
+            pi = self.pi_networks[i](X)
+            gamma = self.gamma_networks[i](X)
+
+            # Update V_i
+            V = V + tf.matmul(
+                tf.transpose(Z, perm=[0, 2, 1]),
+                self.functions.sigma(X, pi)
+            ) * dW_i
+
+            # Update Z_i
+            q = tf.matmul(gamma, self.functions.sigma(X, pi))
+            Z = (
+                Z - (1 / self.N) * self.functions.D_H(X, pi, Z, q)
+                + q * dW_i
+            )
+
+            # Update X_i
+            X = (
+                X + self.functions.b(X, pi) * (1 / self.N)
+                + self.functions.sigma(X, pi) * dW_i
+            )
+
+        return Xs, Vs, Zs
+
     def train(self, display_steps=False):
         """
         Train the neural network model using the Deep BSDE method.
@@ -303,16 +357,16 @@ class BSDE_Solver:
         # Iteration steps
         for iteration_step in range(1, self.iteration_steps + 1):
 
-            # Modify learning rates at specified intervals
-            # if iteration_step % 200 == 0:
+            # Smaller learning rates after 500 iterations
+            if iteration_step % 500 == 0:
 
-            #    self.optimizer_gamma.learning_rate.assign(
-            #        self.optimizer_gamma.learning_rate.numpy() / 10
-            #    )
-            #    for i in range(self.N):
-            #        self.optimizers_pi[i].learning_rate.assign(
-            #            self.optimizers_pi[i].learning_rate.numpy() / 10
-            #        )
+                self.optimizer_gamma.learning_rate.assign(
+                    self.optimizer_gamma.learning_rate.numpy() / 10
+                )
+                for i in range(self.N):
+                    self.optimizers_pi[i].learning_rate.assign(
+                        self.optimizers_pi[i].learning_rate.numpy() / 10
+                    )
 
             # Define Brownian motion with shape N x batch_size
             dW = (
@@ -337,10 +391,8 @@ class BSDE_Solver:
             # Store BSDE loss from this iteration step
             bsde_losses[iteration_step-1] = loss_1.numpy()
 
-            # Compute the gradients
+            # Optimisation step
             grads = tape.gradient(loss_1, trainable_param)
-
-            # Use ADAM for optimisation
             self.optimizer_gamma.apply_gradients(zip(grads, trainable_param))
 
             # Optimising the Control Parameters
@@ -359,10 +411,10 @@ class BSDE_Solver:
             # Compute the loss of the iteration as the sum of the losses
             loss_2 = tf.reduce_mean(tf.stack(losses))
 
-            # Add the loss from this iteration to the list
+            # Store the loss from this iteration
             control_losses[iteration_step - 1] = loss_2
 
-            # Update control parameters
+            # Optimisation step
             for i in range(self.N):
 
                 # Define gradients
@@ -375,13 +427,12 @@ class BSDE_Solver:
                     zip(gradients_i, trainable_params[i])
                 )
 
+            # Print the current iteration step and elapsed time
             if display_steps:
-                # Print the current iteration step and elapsed time
+
                 if iteration_step % 100 == 0:
 
-                    # Record the end time of the iteration step
                     end_time = time.time()
-
                     print(f"Iteration step {iteration_step}, "
                           f"time: {(end_time - start_time) / 60:.4f} minutes")
 
@@ -389,5 +440,63 @@ class BSDE_Solver:
         self.bsde_losses = bsde_losses
         self.control_losses = control_losses
 
+        # End of training
         print("Training finished")
+
+        return None
+
+    def plot(self, str="losses"):
+
+        if str == "losses":
+
+            # Plot the loss functions
+            fig, axs = plt.subplots(1, 2, figsize=(20, 7.5))
+
+            # First plot
+            axs[0].plot(range(1, self.iteration_steps+1), self.bsde_losses)
+            axs[0].set_yscale('log')
+            axs[0].set_title("Loss Function of the BSDE")
+            axs[0].set_xlabel("Iteration step")
+            axs[0].set_ylabel("BSDE Loss")
+            axs[0].grid()
+
+            # Second plot
+            axs[1].plot(range(1, self.iteration_steps+1), self.control_losses)
+            axs[1].set_yscale('log')
+            axs[1].set_title(r"Derivative of the Hamiltonian w.r.t $\pi$")
+            axs[1].set_xlabel("Iteration step")
+            axs[1].set_ylabel("Control Loss")
+            axs[1].grid()
+
+            plt.show()
+
+        if str == "primal_results":
+
+            # Compute X, V, Z
+            X, V, Z = self.simulate()
+
+            # Plot each of them
+            fig, axs = plt.subplots(3, 1, figsize=(20, 10))
+
+            axs[0].plot(range(self.N+1), X.reshape(self.N+1, 2))
+            axs[0].set_xlabel("Time")
+            axs[0].set_ylabel("X")
+            axs[0].set_title("X")
+            axs[0].grid()
+
+            axs[1].plot(range(self.N+1), V.reshape(self.N+1, 1))
+            axs[1].set_xlabel("Time")
+            axs[1].set_ylabel("V")
+            axs[1].set_title("V")
+            axs[1].grid()
+
+            axs[2].plot(range(self.N+1), Z.reshape(self.N+1, 2))
+            axs[2].set_xlabel("Time")
+            axs[2].set_ylabel("Z")
+            axs[2].set_title("Z")
+            axs[2].grid()
+
+            plt.tight_layout()
+            plt.show()
+
         return None

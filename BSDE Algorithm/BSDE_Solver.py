@@ -327,7 +327,7 @@ class BSDE_Solver:
                 X + self.functions.b(X, pi) * (1 / self.N)
                 + self.functions.sigma(X, pi) * dW_i
             )
-
+        Vs = np.reshape(Vs, (self.N+1, ))
         return Xs, Vs, Zs
 
     def train(self, display_steps=False):
@@ -357,8 +357,8 @@ class BSDE_Solver:
         # Iteration steps
         for iteration_step in range(1, self.iteration_steps + 1):
 
-            # Smaller learning rates after 500 iterations
-            if iteration_step % 500 == 0:
+            # Smaller learning rates after given number of iterations
+            if iteration_step in [1000, 1500, 2000, 2500]:
 
                 self.optimizer_gamma.learning_rate.assign(
                     self.optimizer_gamma.learning_rate.numpy() / 10
@@ -415,7 +415,7 @@ class BSDE_Solver:
             control_losses[iteration_step - 1] = loss_2
 
             # Optimisation step
-            for i in range(self.N):
+            for i in range(self.N-1):
 
                 # Define gradients
                 gradients_i = tape.gradient(
@@ -430,7 +430,7 @@ class BSDE_Solver:
             # Print the current iteration step and elapsed time
             if display_steps:
 
-                if iteration_step % 100 == 0:
+                if iteration_step % (self.iteration_steps//10) == 0:
 
                     end_time = time.time()
                     print(f"Iteration step {iteration_step}, "

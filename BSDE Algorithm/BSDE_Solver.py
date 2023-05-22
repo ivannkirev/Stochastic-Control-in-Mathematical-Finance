@@ -67,8 +67,8 @@ class BSDE_Solver:
         # Initialise X, V, Z
         self.x_0 = parameters['x_0']
         self.V_0 = tf.Variable(tf.random.uniform((1, 1),
-                                                 minval=-0.5,
-                                                 maxval=0.5))
+                                                 minval=-1.0,
+                                                 maxval=1.0))
         self.Z_0 = tf.Variable(tf.random.uniform((2, 1),
                                                  minval=-0.5,
                                                  maxval=0.5))
@@ -122,7 +122,7 @@ class BSDE_Solver:
             tf.keras.layers.Dense(
                 12, activation='relu',
                 kernel_initializer=tf.keras.initializers.RandomUniform(
-                    minval=-1.0, maxval=1.0
+                    minval=-0.1, maxval=0.1
                 ),
                 input_shape=(2, 1)),
         ])
@@ -132,13 +132,13 @@ class BSDE_Solver:
             nn.add(tf.keras.layers.Dense(
                 12, activation='relu',
                 kernel_initializer=tf.keras.initializers.RandomUniform(
-                    minval=-1.0, maxval=1.0
+                    minval=-0.1, maxval=0.1
                 )))
 
         nn.add(tf.keras.layers.Dense(
             output_size,
             kernel_initializer=tf.keras.initializers.RandomUniform(
-                minval=-1.0, maxval=1.0
+                minval=-0.1, maxval=0.1
             )))
         nn.add(tf.keras.layers.Reshape((2, output_size)))
 

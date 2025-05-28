@@ -1,0 +1,270 @@
+\chapter{Framework}
+
+\section{Unconstrained non-Markovian Case}
+
+We consider a control model where the state of the system is governed by a stochastic differential equation (SDE) valued in $\R^n$:
+\begin{equation}
+    \mathrm{d}X^\pi(t) = b(t, X^\pi(t), \pi(t)) \, \mathrm{d}t + \sigma(t, X^\pi(t), \pi(t)) \, \d \bm{W} (t), \label{eq: state_process_primal}
+\end{equation}
+where $\bm{W}(t)$ is a $d-$dimensional Brownian motion on a filtered probability space $(\Omega, \mathcal{F}, \mathbb{F} = \{\mathcal{F}_t\}_{t \in [0,T]}, \mathbb{P})$. The control $\pi(t)$ is a progressively measurable process with respect to $\mathbb{F}$, taking values in $\mathbb{R}^m$.
+
+We fix a finite time horizon \( 0 < T < \infty \) and define the set of admissible controls:
+\begin{equation*}
+    \mathcal{A} := \left\{ \pi : [0, T] \times \Omega \to \mathbb{R}^m \;\middle|\; \mathbb{E} \int_0^T |\pi(t)|^2 \, \mathrm{d}t < \infty \right\}.
+\end{equation*}
+In our framework the coefficients of the state system are linear functions of the control and the underlying process:
+\begin{align*}
+    b(t, x, \pi) &:= A(t) x + B(t)\pi \in \R^n,  \\
+    \sigma(t, x, \pi) &:= 
+    \begin{bmatrix}
+        (C_1(t) x + D_1(t)\pi) & \cdots & (C_d(t) x + D_d(t)\pi)
+    \end{bmatrix} \in \R^{n \times d},
+\end{align*}
+where $A(t), C_i(t) \in \mathbb{R}^{n \times n}$, and $B(t), D_i(t) \in \mathbb{R}^{n \times m}$, for \( i = 1, \dots, d \), are deterministic coefficient processes. We assume that these coefficient processes are uniformly bounded and measurable functions.
+
+\subsection{Primal Problem}
+
+For the state and control processes $X^\pi(t)$ and $\pi(t)$, we define the gain functional as:
+\begin{equation*}
+    J(\pi) := \mathbb{E} \left[ \int_0^T f(t, X^\pi(t), \pi(t)) \, \mathrm{d}t + g(X^\pi(T)) \right],
+\end{equation*}
+where the \textit{running cost} \( f : [0, T] \times \mathbb{R}^n \times \mathbb{R}^m \to \mathbb{R} \) and the \textit{terminal cost} \( g : \mathbb{R}^n \to \mathbb{R} \) are quadratic functions of the form:
+\begin{align}
+    f(t, x, \pi) = \tfrac{1}{2} x^\top Q(t) x + x^\top S^\top(t) \pi + \tfrac{1}{2} \pi^\top R(t) \pi, \quad
+    g(x) = \tfrac{1}{2} x^\top G(T) x + x^\top L(T).  \label{eq: f_and_g}
+\end{align}
+The coefficients are assumed to satisfy the following conditions:
+
+\begin{assumptions}
+We assume that the coefficients $Q(t) \in \mathbb{R}^{n \times n}$ and $R(t) \in \mathbb{R}^{m \times m}$ are symmetric and positive semidefinite for all \( t \in [0, T] \), and that $S(t) \in \mathbb{R}^{m \times n}$, $G(T) \in \mathbb{R}^{n \times n}$ (symmetric), and $L(T) \in \mathbb{R}^n$ are all bounded and measurable. Furthermore, the extended running cost matrix 
+\[
+\begin{bmatrix}
+    Q(t) & S^\top(t) \\
+    S(t) & R(t)
+\end{bmatrix} \ge 0.
+\]
+\end{assumptions}
+
+\begin{definition}[Primal Problem]
+    \label{definition: primal_problem}
+    Suppose that $X(t)$ is the solution to the SDE \cref{eq: state_process_primal}. The \textbf{primal problem} is the following optimisation task
+    \begin{equation*}
+    J(\pi^\star) = \inf_{\pi \in \mathcal{A}} \mathbb{E} \left[ \int_0^T f(t, X^\pi(t), \pi(t)) \, \mathrm{d}t + g(X^\pi(T)) \right].
+    \end{equation*}
+    Ofter we work with a transformed version of the primal problem where the optimisation is via maximisation instead of minimisation: 
+    \begin{equation*}
+        J(\pi^\star) =  - \sup_{\pi \in \mathcal{A}} \mathbb{E} \left[ \int_0^T  - f(t, X^\pi(t), \pi(t)) \, \mathrm{d}t - g(X^\pi(T)) \right].
+    \end{equation*}
+    We denote the \textbf{value function}, \( v(t, x) \), of the primal problem as
+    \begin{equation*}
+        v(t, X(t)) := \sup_{\pi \in \mathcal{A}} \mathbb{E} \left[ \int_0^T  - f(t, X^\pi(t), \pi(t)) \, \mathrm{d}t - g(X^\pi(T)) \right].
+    \end{equation*}
+\end{definition}
+
+
+\subsection{Dual Problem}
+
+We now formulate the dual problem corresponding to the transformed primal maximisation problem. To this end, define the auxiliary process \( Y(t) \in \R^n \) satisfying the stochastic differential equation:
+\begin{equation} \label{eq:Y_SDE}
+    \mathrm{d}Y(t) = \left[ \alpha(t) - A(t)^\top Y(t) - \sum_{i=1}^d C_i(t)^\top \beta_i(t) \right] \mathrm{d}t + \sum_{i=1}^d \beta_i(t) \, \mathrm{d}W_i(t), \quad Y(0) = y,
+\end{equation}
+where \( \alpha(t) \in \R^n \), \( \beta_i(t) \in \R^n \) for \( i = 1, \dots, d \), are progressively measurable processes. 
+
+There is a unique solution to the SDE for a given $(y, \alpha, \beta_1, \dots, \beta_d)$. We call $(\alpha, \beta_1, \dots, \beta_d)$ the \textit{admissible dual control} and $(Y, \alpha, \beta_1, \dots, \beta_d)$ the \textit{admissible dual pair}. 
+
+\begin{definition}[Dual Problem]
+\label{definition: dual_problem}
+    Suppose $Y(t)$ is the solution to the SDE \eqref{eq:Y_SDE}. The dual problem is given by
+    \[
+    \inf_{y \in \R^n} \left\{ x^\top y + \inf_{(\alpha, \beta_1, \dots, \beta_d)} \mathbb{E} \left[ \int_{0}^T \phi(t, \alpha(t), \beta(t)) \, \mathrm{d}t + h(Y(T)) \right] \right\},
+    \]
+    where \( \beta(t) = B(t)^\top Y(t) + \sum_{i=1}^d D_i(t)^\top \beta_i(t) \) and the dual functions are given by
+    \begin{align*}
+        \phi(t, \alpha, \beta) := \frac12 \alpha^T \tilde{Q} \alpha + \alpha^T \tilde{S}^T \beta + \frac12 \beta^T \tilde{R} \beta, \quad
+        h(y) := \frac12 (y^T + L^T ) G^{-1} (y + L)
+    \end{align*}
+    where
+    \begin{equation*} 
+        \begin{bmatrix}
+            \tilde{Q} & \tilde{S}^T\\
+            \tilde{S} & \tilde{R}
+        \end{bmatrix}
+        :=
+        \begin{bmatrix}
+            Q & S^T\\
+            S & R
+        \end{bmatrix}^{-1}.
+    \end{equation*}
+    This optimisation problem can be solved in two steps: first, for fixed \( y \), solve a stochastic control problem
+    \begin{equation*}
+        - \tilde{v}(t, y) := \inf_{(\alpha, \beta_1, \dots, \beta_d)} \mathbb{E} \left[ \int_{0}^T \phi(t, \alpha(t), \beta(t)) \, \mathrm{d}t + h(Y(T)) \right],
+    \end{equation*}
+    where we denote by $\tilde{v}(t,y)$ the \textbf{dual value function}. Second, solve the following static optimisation problem 
+    \begin{equation*}
+        \inf_{y} \{ x^T y - \tilde{v}(t, y) \}.
+    \end{equation*}
+\end{definition}
+
+
+\begin{remark}
+    Note that explicit forms for the dual coefficients $\tilde{Q}, \tilde{S}$ and $\tilde{R}$ can be computed as follows:
+    \begin{align*}
+    &\tilde{Q} = Q^{-1} - Q^{-1} S^T (S Q^{-1} S^T - R)^{-1}S Q^{-1} \\
+    &\tilde{R} = R^{-1} - R^{-1} S (S^T R^{-1}S - Q^{-1})^{-1}S^T R^{-1} \\
+    &\tilde{S} = (S Q^{-1} S^T - R)^{-1}S Q^{-1} = R^{-1}S(S^TR^{-1}S - Q)^{-1}
+    \end{align*}
+\end{remark}
+
+\begin{theorem}[Primal-Dual Relationship]
+    \label{theorem: primal_dual_relationship}
+    For the primal problem defined as in \cref{definition: primal_problem} and the corresponding dual problem from \cref{definition: dual_problem}, the following inequality holds:
+    \begin{equation*}
+    \sup_\pi \E \bigg[ -\int_{0}^T f(t, X,\pi) \d t - g(X(T)) \bigg] \le \inf_{y, \alpha, \beta_1, \dots, \beta_d} \bigg[ x^T y + \E\bigg[\int_{0}^T \phi(t,\alpha, \beta ) \d t + h(Y(T)) \bigg] \bigg].
+    \end{equation*}
+\end{theorem}
+
+\begin{remark}
+    Specifically, the primal problem acts as a maximisation task, while the dual problem minimises the objective. Both problems optimise similar controls, but one does so from below while the other from above. In some cases equality can be achieved, removing the gap between the two tasks.
+\end{remark}
+
+\begin{proof}
+The proof closely follows ideas from \cite{Constrained_Quadratic_Risk_Minimisation_Via_FBSDEs}. First, assume that the dual process $Y$ is driven by an SDE of the form
+\begin{equation*}
+    \d Y(t) = \alpha_1 (t) + \sum_{i=1}^d \beta_i(t) \d W_i(t),
+\end{equation*}
+with initial condition $Y(0) = y$, where $\alpha_1$ and $\beta_i$ are stochastic processes to be determined. Ito's lemma gives 
+\begin{align*}
+    \d (X^T Y) &= X^T \d Y + Y^T \d X + \d X^T \d Y\\
+    &= \bigg[  X^T \underbrace{\bigg(\alpha_1 + A^T Y + \sum_{i=1}^d C_i^T \beta_i\bigg)}_{:= \alpha} + \pi^T \underbrace{\bigg(B^T Y + \sum_{i=1}^d D_i^T \beta_i\bigg)}_{:= \beta} \bigg] \d t + \text{local martingale}.
+\end{align*}
+Denoting $\alpha = \alpha_1 + A^T Y + \sum_{i=1}^d C_i^T \beta_i$ and $\beta = B^T Y + \sum_{i=1}^d D_i^T \beta_i$, we have that the dual process $Y(t)$ satisfies
+\begin{equation}
+    \begin{cases}
+        \d Y(t) &= \big[ \alpha(t) - A^T(t) Y(t) - \sum_{i=1}^d C_i^T(t) \beta_i(t)\big]\d t + \sum_{i=1}^d \beta_i(t) \d W_i(t)\\
+        Y(0) &= y. \label{eq: y_sde}
+    \end{cases}
+\end{equation}
+Returning to Ito's lemma to $X^T(t) Y(t)$, we have
+\begin{align*}
+    \d (X^T Y) &= (X^T \alpha + \pi^T \beta ) \d t + \text{local martingale}.
+\end{align*}
+The process $X^T(t)Y(t) - \int_{0}^t [X^T(s) \alpha(s) + \pi^T(s) \beta(s)] \d s$ is a local martingale and a supermartingale if it is bounded below by an integrable process, which gives 
+\begin{equation}
+    \E \bigg[ X^T(T) Y(T) - \int_{0}^T \big(X^T(s) \alpha(s) + \pi^T(s) \beta(s) \big) \d s \bigg] \le X^T(0) Y(0) =  x^T y.
+\end{equation}
+Using this, and the following dual functions $\phi : [0, T] \times \R^n \times \R^m \to \R$ 
+\begin{equation}
+    \phi(t, \alpha, \beta) = \sup_{x, \pi} \big\{x^T \alpha + \pi^T \beta - f(t, x, \pi) \big\} \label{eq: phi_def}
+\end{equation}
+and $h: \R^n \to \R$
+\begin{equation}
+    h(y) = \sup_x \big\{-x^T y - g(x)\big\}, \label{eq: h_def}
+\end{equation}
+we arrive at the desired inequality
+\begin{equation}
+    \sup_\pi \E \bigg[ -\int_{0}^T f(t, X,\pi) \d t - g(X(T)) \bigg] \le \inf_{y, \alpha, \beta_1, \dots, \beta_d} \bigg[ x^T y + \E\bigg[\int_{0}^T \phi(t,\alpha, \beta ) \d t + h(Y(T)) \bigg] \bigg],
+\end{equation}
+where the RHS is the dual control problem. 
+
+Now to find explicit forms for $\phi$ and $h$, recall that $f, g$ take the quadratic forms \cref{eq: f_and_g}, so finding the supremums in \cref{eq: phi_def} and \cref{eq: h_def} is done by setting the derivatives to zero. We have
+\begin{equation*}
+    \phi(t, \alpha, \beta) = \sup_{x, \pi} \bigg\{
+    \begin{bmatrix}
+        x\\
+        \pi
+    \end{bmatrix}^T
+    \begin{bmatrix}
+        \alpha\\
+        \beta
+    \end{bmatrix} - \frac12
+    \begin{bmatrix}
+        x\\
+        \pi
+    \end{bmatrix}^T
+    \begin{bmatrix}
+        Q & S^T\\
+        S & R
+    \end{bmatrix}
+    \begin{bmatrix}
+        x\\
+        \pi
+    \end{bmatrix}
+    \bigg\},
+\end{equation*}
+so setting the derivative to zero, we get
+\begin{equation*}
+    \begin{bmatrix}
+        \alpha\\
+        \beta
+    \end{bmatrix} - 
+    \begin{bmatrix}
+        Q & S^T\\
+        S & R
+    \end{bmatrix}
+    \begin{bmatrix}
+        x\\
+        \pi
+    \end{bmatrix}
+    = 0 \implies 
+    \begin{bmatrix}
+        x^\ast\\
+        \pi^\ast
+    \end{bmatrix} = 
+    \begin{bmatrix}
+        Q & S^T\\
+        S & R
+    \end{bmatrix}^{-1}
+    \begin{bmatrix}
+        \alpha\\
+        \beta
+    \end{bmatrix}.
+\end{equation*}
+Therefore
+\begin{align*}
+    \pi^\ast &= \big[ S Q^{-1}S^T - R \big]^{-1}(S Q^{-1} \alpha - \beta)\\
+    x^\ast &= Q^{-1} (\alpha - S^T \pi^\ast)
+\end{align*}
+Then $\phi$ is given by
+\begin{equation*}
+    \phi(t, \alpha, \beta) = 
+    \frac12
+    \begin{bmatrix}
+        \alpha\\
+        \beta
+    \end{bmatrix}^T
+    \begin{bmatrix}
+        Q & S^T\\
+        S & R
+    \end{bmatrix}^{-1}
+    \begin{bmatrix}
+        \alpha\\
+        \beta
+    \end{bmatrix}.
+\end{equation*}
+Denoting
+\begin{equation*}\begin{bmatrix}
+        \tilde{Q} & \tilde{S}^T\\
+        \tilde{S} & \tilde{R}
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        Q & S^T\\
+        S & R
+    \end{bmatrix}^{-1},
+\end{equation*}
+we get
+\begin{equation*}
+    \phi(t, \alpha, \beta) = \frac12 \alpha^T \tilde{Q} \alpha + \alpha^T \tilde{S}^T \beta + \frac12 \beta^T \tilde{R} \beta,
+\end{equation*}
+Similarly, 
+\begin{equation*}
+    D_x \big[-x^T y - \frac12 x^T G x - x^T L \big] = -y - Gx - L \implies x^\ast = - G^{-1} (y + L).
+\end{equation*}
+Then $h(y)$ is given by
+\begin{align*}
+    h(y) &= (y^T + L^T) G^{-1} y - \frac12 (y^T + L^T)G^{-1}(y + L) + (y^T + L^T) G^{-1} L\\
+    &= \frac12 \big[ y^T G^{-1} y +  L^T G^{-1} y + y^T G^{-1} L + L^T G^{-1} L\big]\\
+    &= \frac12 (y^T + L^T)G^{-1}(y + L)
+\end{align*}
+
+\end{proof}

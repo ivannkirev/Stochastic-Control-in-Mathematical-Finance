@@ -1,0 +1,128 @@
+\section{The Deep Controlled 2BSDE Method} \label{sec:2bsde}
+In this section, we adapt the results from \cite{Deep_Learning_for_Constrained_Utility_Maximisation}. We first state the main results and then apply the algorithm for the unconstrained case described in chapter \ref{Unconstrained Optimisation with Quadratic Running Cost}, in which we know the theoretical optimal control, with the purpose of verifying the results from the deep controlled 2BSDE method. \\
+
+The algorithm was developed mainly following the idea from \cite{Deep_Learning_for_Constrained_Utility_Maximisation} as well as \cite{Machine_Learning_Approximation_Algorithms}. The code was written from scratch, as the first paper only provides a pseudo-code and the second one utilises an older version of \verb|tensorflow|, but the ideas are similar, with adaptations to our specific problem. The code for this project can be found at \cite{kirev2023github}.
+
+
+\subsection{Description of Algorithm}
+%We work in the framework described in Chapter \ref{sec: general}. Recall that the HJB equation for the primal problem was given by
+%\begin{equation*}
+%    \frac{\partial}{\partial t} v(t,x) = - \sup_{\pi \in K} F(t, x, \pi, D_x[v(t,x)], D_x^2[v(t,x)]),
+%\end{equation*}
+%with terminal condition $v(T,x) = -g(x)$, where the Hamiltonian $F$ is defined by
+%\begin{equation*}
+%    F(t, x, \pi, D_x[v], D_x^2[v]) = (AX + B\pi)^T D_x[v] + \frac{1}{2} (CX + D\pi)^T D_x^2[v] (CX + D\pi) - f(t,x, \pi)
+%\end{equation*}
+%Recall further that the generalised Hamiltonian $\mathcal{H} :\Omega \times [t_0, T] \times \R^n \times K \times R^n \times \R^{n} \to \R$ is given by
+%\begin{align*}
+%    \mathcal{H}(t, x, \pi, p, q) = x^T A^T p + \pi^T B^T p + ( x^T C^T  +  \pi^T D^T ) q - f(t,x,\pi).
+%\end{align*}
+%We can now describe the value function and its derivatives using a system of FBSDEs. \\
+
+%Suppose that there exists an optimal control $\pi \in K$ with the associated controlled diffusion $X$. Then there exists continuous processes $(V, Z, \Gamma)$, solving the following 2BSDE:
+%\begin{align*}
+%    \d V(t) &= Z^T(t) (CX + D\pi) \d W(t)\\
+%    \d Z(t) &= - D_x[H(t, X(t), \pi(t), Z(t), \Gamma(t) (CX + D\pi))] \d t + \Gamma(t) (CX + D \pi) \d W(t)
+%\end{align*}
+%with terminal conditions $V(T) = - g(X(T))$ and $Z(T) = - D_x[g(X(T))]$ and such that the control $\pi(t)$ satisfies
+%\begin{equation*}
+%    F(t, X(t), \pi(t), Z(t), \Gamma(t)) = \sup_{\pi \in K} F(t, X(t), \pi, Z(t), \Gamma(t))
+%\end{equation*}
+%The proof of this can be found in \cite{Deep_Learning_for_Constrained_Utility_Maximisation}.\\
+
+We try to solve the problem using machine learning techniques. The idea is to simulate all processes in the forward direction, introducing the two new variables $v_0, z_0$ and moving forward through a discretisation of the time interval $[t_0, T]$. We set $\Gamma$ to be a neural network that at each time $t_i$ takes the $i$th state position denoted by $X_i$ as input since we are approximating $D_x^2[v]$ with this process. The control $\pi$ is also a neural network, taking in the same state $X_i$ as input at each time step.\\
+
+Each of the neural networks has $L$ number of layers with $l$ hidden nodes. We use a nonlinear activation function between each of the hidden layers. For our networks, we choose the \verb|ReLu| activation function, although this choice is rather arbitrary (provided it is nonlinear). No activation function is applied to the output. We denote by $\theta_i$ the parameters of the neural network for the controls $\pi_i$ at each time $t_i$ of the discretisation of the time interval. We further denote by $N_{\theta_i}(X_i)$ the output of the neural network. Similarly, for $\Gamma$ we denote the parameters by $\lambda_i$ and the output of the neural network at time $t_i$ by $N_{\lambda_i}(X_i)$. \\
+
+We then use the following Euler-Maruyama Scheme. Set $X_0 = x_0$, and initialise $V_0 = v_0, Z_0 = z_0$. For $i=0, \dots, N-1$ let $\pi_i = N_{\theta_i^0}(X_i)$, $\Gamma_i = N_{\lambda_i^0}(X_i)$ and 
+\begin{align*}
+    X_{i+1} &= X_i + (t_{i+1} - t_i) (AX_i + B\pi_i) + (CX_i + D \pi_i) \d W_i\\
+    V_{i+1} &= V_i + Z^T_i (CX_i + D \pi_i) \d W_i \\
+    Z_{i+1} &= Z_i - (t_{i+1} - t_i) D_x[H(t_i, X_i, \pi_i, Z_i, \Gamma_i(CX_i + D\pi_i))] + \Gamma_i (CX_i + D \pi_i) \d W_i,
+\end{align*}
+where $\d W_i$ is a multivariate normal $N(0, (t_{i+1} - t_i)$. \\
+
+Once we have repeated this iteration $N-1$ times we arrive at time $T$, at which point we have not satisfied the terminal conditions. We, therefore, define the loss function
+\begin{equation*}
+    L_1(\{ \lambda_i\}_{i=0}^{N-1} \cup \{ V_0, Z_0 \}) := \E \bigg[ |V_N + g(X_N)|^2 + | Z_N + D_x[g(X_N)]|^2 \bigg].
+\end{equation*}
+This loss function is for the parameters of the neural network for $\Gamma$ and the initial values $v_0, z_0$. In addition, we need a second loss function for the parameters of the neural network for $\pi$. We define for each time step 
+\begin{equation*}
+    L_2(\theta_i, i) := \E \big[\big|D_{\pi}[F(t_i, X_i, \pi_i, Z_i, \Gamma_i)]\big|^2 \big].
+\end{equation*}
+Since we want to maximise the Hamiltonian $F$ w.r.t. $\pi$, we minimise the square of its derivative. For each of these loss functions, we update the parameters using the Adam algorithm. We repeat this procedure until the parameters converge. The algorithm can be described as follows: \\
+
+\begin{algorithm}
+    \caption{Primal Deep BSDE Method}
+    \begin{algorithmic}
+        \State Initialise $V_0 \sim Unif([-0.1, 0.1])$ and $Z_0 \sim Unif([-0.1, 0.1])$ 
+        \For{i=0, 1, \dots, N-1}
+            \State Initialise $\theta_i \sim Unif([-0.1, 0.1])$ and $\lambda_i \sim Unif([-0.1, 0.1])$
+        \EndFor
+        \For{i=0, 1, \dots, NumEpochs}
+            \State Generate $W_k$ for $k=1,\dots, B$
+            \State Generate $X^k, V^k, Z^k, \pi^k, \Gamma^k$ using $\{ \theta_i, \lambda_i\}_{i=0}^{N-1}$ and $V_0, Z_0$
+            \State Set $L_1 := \frac{1}{B}\sum_{k=1}^{B} \bigg[ |V^k_N + g(X^k_N)|^2 + | Z_N^k + D_x[g(X_N^k)]|^2 \bigg]$
+            \State Update $\{ \lambda_i\}_{i=0}^{N-1} \cup \{ V_0, Z_0 \}$ using the \verb|ADAM| algorithm
+            \State Regenerate $X^k, V^k, Z^k, \pi^k, \Gamma^k$ using $\{ \theta_i, \}_{i=0}^{N-1}$ and $V_0, Z_0$ and the updated $\{ \lambda_i\}_{i=0}^{N-1}$
+            \For{i=0, 1, 2, \dots, N-1}
+                \State Set $L_2(\theta_i, i) := -\frac{1}{B}\sum_{k=1}^{B} \big[  F(t_i, X^k_i, \pi^k_i, Z^k_i, \Gamma^k_i) \big]$
+                \State Update $\theta_i $ using the \verb|ADAM| algorithm
+            \EndFor
+        \EndFor
+    \end{algorithmic}
+\end{algorithm}
+
+
+
+
+
+
+
+
+
+
+\subsection{Applying the Algorithm to the Unconstrained Case}
+We perform the Deep Controlled 2BSDE algorithm using \verb|tensorflow| for the case where the control is unconstrained and the problem is quadratic, i.e. the framework of chapter \ref{Unconstrained Optimisation with Quadratic Running Cost}. We do this because we know the analytical solution for this problem and want to compare the two methods to verify the Deep Controlled 2BSDE method. \\
+
+We iterate the steps described above until the loss functions have converged. We use constant values for the parameters of the model, so that $A, B, C, D, Q ,R, S, G, L$ are not dependent on time (for simplicity). We take the learning rate for the BSDE step to be larger than the learning rate for the control step, ensuring that the loss functions converge. \\
+
+The figure below shows the loss functions of the primal problem. We have used a batch size of $1024$ and the time interval $[0, 1]$ is divided into $20$ time-steps. 
+%\begin{center}
+%    \includegraphics[width=\textwidth]{figures/primal_losses.png}
+%\end{center}
+The image on the left represents the loss $L_1$, corresponding to the terminal conditions and on the right we have shown the loss $L_2$, which ensures the optimality of the control. In this method, we have used an initial learning rate of $10^{-2}$ for minimising $L_1$ and $10^{-3}$ for minimising $L_2$. After a certain number of iterations, we divide this learning rates by $10$.\\
+
+
+    
+
+\subsubsection*{Extending the Algorithm to the Dual Problem}
+As described in \cite{Deep_Learning_for_Constrained_Utility_Maximisation}, this algorithm can be extended to the dual problem. We perform the algorithm for our problem, and show the loss functions for the dual problem:
+%\begin{center}
+%    \includegraphics[width=\textwidth]{figures/dual_losses.png}
+%\end{center}
+For the control loss, we have plotted the derivative of the loss function $L_3$ with respect to $y$. We have used learning rates of $10^{-2}$ and $10^{-3}$ for the respective losses. \\
+
+\subsection{Verifying Results with Analytical Solution}
+Now that we have both the primal and dual solutions from the Deep BSDE algorithm, we compare the results with the analytical solution. In chapter \ref{sec: Numerical Solutions} we described how to solve the systems of ODEs for the primal and dual problem using the Runge-Kutta numerical scheme, giving us the solutions to the unconstrained quadratic case.\\
+
+For a given simulation of the process $X_t$, we can compute the analytical solution to the value function for this problem using the results form \ref{sec: Numerical Solutions}, and plot them together with the results from the Deep BSDE method. We get the following results:
+%\begin{center}
+%    \includegraphics[width=\textwidth]{figures/value function.png}
+%\end{center}
+We can see that both the primal and dual solutions are very close to the solution. \\
+
+Next, we recall that we can obtain the optimal control from \eqref{eq: pi_from_dual_bsde} given that we have obtained the dual processes. From the primal processes, we can also get the optimal control $\pi$, so we can compare the results, together with the analytical solution given by the Runge-Kutta scheme. Below we show the results for a given simulation of $X$, (we only show the first element of the control $\pi$):
+%\begin{center}
+%    \includegraphics[width=\textwidth]{figures/control_plot.png}
+%\end{center}
+Once again, all three algorithms show relatively close results.
+
+\subsection{Further Work}
+With the successful demonstration that the Deep BSDE algorithm is capable of producing results congruent with those derived analytically, we find ourselves in a position to extend its application to scenarios of increased complexity. In these scenarios, achieving analytical results following conventional methods may not be feasible.\\
+
+Our primary focus of interest is instances where the application of control is subject to limitations. In such situations, it's generally infeasible to use traditional methods to derive the optimal control analytically. This limitation presents us with the opportunity to exploit the capabilities of our Deep BSDE algorithm to its full potential, providing a practical alternative to conventional analytical methods.\\
+
+Another area of application we are considering is the exploration of more varied types of cost functions. Until now, we've been predominantly working with quadratic cost functions. However, the real-world scenarios can be more diverse and might require dealing with cost functions of a more general convex nature. In this context, we expect our algorithm to prove its versatility and adaptability, thus expanding the range of problems it can tackle.\\
+
+The algorithm is applied to both primal and dual problems in these scenarios. The primal problem focuses on the task of maximisation, whereas the dual problem centres around minimisation. While it's important to acknowledge that the solutions to these two problems might not be perfectly identical, they can, however, establish upper and lower bounds for the optimal value function. As long as the gap between these boundaries remains relatively small, they can provide invaluable insights. 

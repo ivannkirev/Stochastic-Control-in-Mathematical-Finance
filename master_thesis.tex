@@ -1,0 +1,80 @@
+\documentclass[10pt,a4paper]{report}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern} % Fix for fancyhdr package warning
+
+% Enter the inputs below
+%-------------------------------------------------------------------------------
+\newcommand{\studentName}{Ivan Kirev}
+\newcommand{\projectTitle}{Multidimensional Utility Maximisation in
+Incomplete Markets}
+%\newcommand{\academicYear}{2022-2023}
+%-------------------------------------------------------------------------------
+
+\usepackage{packages/style}
+\input{packages/packages}
+
+\begin{document}
+
+
+% TITLE AND DECLARATION PAGESFluids_MSc_DissertationFluids_MSc_Dissertation
+%------------------------------------------------------------------------
+\frontMatter
+%------------------------------------------------------------------------
+
+
+\clearpage
+
+% ACKNOWLEDGEMENTS
+%------------------------------------------------------------------------
+\section*{Acknowledgements}
+\label{sec:ack}
+\addcontentsline{toc}{section}{Acknowledgements}
+
+I express my deepest gratitude to my supervisor, Prof. Harry Zheng, whose profound expertise, guidance, and unwavering support were pivotal throughout the course of this thesis. I also extend my gratitude to Dr. Kevin Webster, who generously provided me with support and guidance for the implementation of the Deep Learning algorithm.
+%------------------------------------------------------------------------
+
+
+\clearpage
+
+% ABSTRACT
+%------------------------------------------------------------------------
+\section*{Abstract}
+\label{sec:abstract}
+\addcontentsline{toc}{section}{Abstract}
+In this project, we study a general multidimensional linear quadratic stochastic control problem. We impose no constraints on the control, in which case the problem has an analytical solution. We formulate an equivalent dual problem and solve both the primal and dual problems using the Hamilton-Jacobi-Bellman equation approach and the Stochastic Maximum Principle approach. Each of the four solutions are shown to be equivalent. We then consider a similar problem, where the coefficients of the state process depend on a time-continuous finite state space Markov chain. With this modification, the four methods still give equivalent solutions, but the solutions are now in the form of systems of ODEs for each state of the Markov chain, as opposed to a single system of ODEs in the non-Markov chain case. To complete the solutions, we solve numerically the system of ODEs for the 1-dimensional Brownian motion case. We employ the Runge-Kutta method to solve the coupled matrix ODEs, showing the equivalence of the solutions of the dual and primal problems. Finally, we want to consider a more general case where we impose constraints on the control and the cost is not necessarily quadratic, but convex. In this case, there are no longer analytical solutions, so we consider a deep learning algorithm with a focus on utility maximisation. We test this algorithm on the quadratic unconstrained case and compare the results with the already derived analytical results.
+%------------------------------------------------------------------------
+
+
+\clearpage
+
+
+% TABLE OF CONTENTS
+%------------------------------------------------------------------------
+\tableofcontents{\thispagestyle{fancyplain}} % Use \thispagestyle for correct headers and footers
+%------------------------------------------------------------------------
+
+\clearpage
+
+\input{sections/notation}
+\clearpage
+\input{sections/chapter_1}
+\clearpage
+\input{sections/chapter_2}
+\clearpage
+\input{sections/chapter_3}
+\clearpage
+\input{sections/chapter_4}
+\clearpage
+\input{sections/chapter_5}
+\clearpage
+%\input{sections/chapter_6}
+% REFERENCES
+%------------------------------------------------------------------------
+\bibliographystyle{plain}
+\bibliography{sections/bibliography}
+\addcontentsline{toc}{section}{References} %Add this to the contents page
+
+
+\end{document}
+
+

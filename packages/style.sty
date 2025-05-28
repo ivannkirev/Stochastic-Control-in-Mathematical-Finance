@@ -1,0 +1,115 @@
+% \usepackage[margin=2cm]{geometry}
+% \usepackage[top=25mm,bottom=25mm,left=40mm,right=25mm]{geometry} % Use showframe for box
+
+
+% \usepackage[a4paper, total={6in, 8in},showframe]{geometry}
+% \usepackage[a4paper, margin=2in,showframe]{geometry}
+
+\usepackage[top=25mm,bottom=25mm,left=25mm,right=25mm]{geometry} % Use showframe for box
+
+
+\usepackage{amssymb}            %required for typesetting mathematics
+\usepackage{amsmath}  
+\usepackage{mathtools}%required for typesetting mathematics
+\usepackage{graphicx}
+\usepackage{fancyhdr}           %required for certain types of headers, eg the sections
+\usepackage{titlesec}
+\usepackage[parfill]{parskip}
+\usepackage{tcolorbox}
+\usepackage[font={footnotesize,it,sf}, justification=justified]{caption} % Format the Figure and Table captions
+\usepackage{natbib}            %required for various bibliography styles and for citations, eg \citep and \citet. Use the option [longnamesfirst] for the first occurence of the citation to produce the names of all authors
+\usepackage{tocloft} 
+\usepackage[pdftex,             %Uses pdftex, required for hyperlinks and bookmarks in a pdf.  Must always be placed at the end of the package declarations, but before hypcap package!!
+            colorlinks,         %Colored hyperlinks
+            linkcolor=black,
+            citecolor=black,
+            bookmarksnumbered,  %Numbers the bookmarks in the pdf doc
+            pdfstartview=FitH,  %Appropriate zoom to fit the horizontal page width to the available screen width
+            pdfview = FitH,     %Same as above
+            pdfauthor = {},%{Dr. Marios Christou},
+            pdftitle = {},%{CI220 Mathematics Lecture Notes},
+            pdfsubject = {}%{Civil \& Environmental Engineering}
+            ]{hyperref}         %requires 'pdftex' as an option to the report document class
+        %Other options for hyperref
+        %bookmarksopen,      %Opens the bookmarks in the pdf doc
+\usepackage[all]{hypcap}            %Hyperlinks to figure/table point to the top of the figure/table, not to the caption that is normally below the float. Must appear after hyperref package, so it will be the last package used.
+
+
+
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+
+
+\parskip = 1.1\baselineskip
+
+\raggedbottom % Default for twoside document is \flushbottom, so need to use this to prevent text being spread across the whole page
+
+\linespread{1.3} % This gives 1.5*line spacing
+
+% Re-format the headings
+\renewcommand{\contentsname}{\fontsize{20}{26}\sffamily Contents \vspace{0.5em}}
+\titleformat*{\section}{\fontsize{20}{26}\bfseries\sffamily}
+\titleformat*{\subsection}{\fontsize{16}{22}\bfseries\sffamily}
+\titleformat*{\subsubsection}{\fontsize{14}{20}\bfseries\sffamily}
+
+
+% Header and footer commands
+\newcommand{\defaultlayout}[0]
+                {\pagestyle{fancy}
+                  \lhead[]{}
+                  \chead[\textit{\textsf{\projectTitle}}]{\textit{\textsf{\projectTitle}}}
+                  \rhead[]{}
+                  \lfoot[\vspace*{-4mm}\hrule \thepage]{\vspace*{-4mm}\hrule}
+                  \cfoot[\textit{\textsf{\studentName}}]{\textit{\textsf{\studentName}}}
+                  \rfoot[]{\thepage}}
+\newlength\Colsep
+\setlength\Colsep{10pt}
+
+
+
+
+% Title Page and Declaration
+%--------------------------------------------------
+\newcommand{\frontMatter}{
+
+\pagestyle{empty}% Start with empty headers and footers for title page and declaration
+
+\begin{sffamily}
+
+\begin{flushleft}
+  \includegraphics[width=0.4\textwidth]{packages/logo.pdf}
+\end{flushleft}
+
+\vspace*{3cm}
+
+\begin{center}
+    \textbf{\Large IMPERIAL COLLEGE LONDON}\\
+        % \vspace*{0.5cm}
+    \vspace*{1.5cm}
+    
+    \hrule height 1.5pt\vspace{-0.3cm}
+    {\huge \projectTitle}
+    \vspace*{0.2cm}
+    \hrule height 1.5pt
+
+    \vspace*{0.5cm}
+    
+    \textit{\large Department of Mathematics}\\
+    
+    \vspace*{3cm}
+    
+    \includegraphics[width=0.4\textwidth]{packages/crest.png}\\
+    \vspace*{3cm}
+    \textbf{\studentName}\\
+\end{center}
+  
+\vspace{\fill}
+
+% \vspace*{\fill}
+  
+\end{sffamily}
+
+
+
+
+}
+%--------------------------------------------------

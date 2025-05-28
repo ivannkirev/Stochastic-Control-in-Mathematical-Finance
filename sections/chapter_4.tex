@@ -1,0 +1,88 @@
+\chapter{Numerical Solutions} \label{sec: Numerical Solutions}
+In this chapter, we solve the system of coupled ODEs which we derived as a solution to the non-Markov problem in Chapter 1, using the Runge-Kutta numerical scheme. Since the built-in libraries in Python using this method do not allow for matrix ODEs as in our case (as far as I saw), I have written the code to solve them from scratch, which can be found here \cite{kirev2023github}.\\
+
+So far, we have derived an analytical solution for both the Primal and Dual problems in the case of quadratic cost and no constraints on the control. These solutions are in the form of a system of three ODEs, which we will now solve numerically. \\
+
+For simplicity, we will consider the case where $d=1$, i.e. we work with one-dimensional Brownian motion. We first present some of the results we have derived in previous sections for the $d=1$ case:
+
+
+
+\subsection{Primal Problem for 1-Dimensional Brownian Motion Case}
+Recall that the value function for the primal problem is given by
+\begin{equation*}
+    v(t, x) = \frac12 x^T P x + x^T M + N,
+\end{equation*}
+where $P(t), M(t)$ and $N(t)$ are solutions to the system of ODEs \eqref{eq: primal_hjb_ricatti_1}, \eqref{eq: primal_hjb_ricatti_2}, \eqref{eq: primal_hjb_ricatti_3}:
+\begin{align*}
+     \frac{\d P}{\d t} +  2A^T P +  2P B \vartheta_1 +  (C^T + \vartheta_1^T D^T)P(C + D \vartheta_1)
+     -  Q -   2S^T \vartheta_1 -  \vartheta_1^T R \vartheta_1 = 0 \\
+     \frac{\d M}{\d t} + A^T M + P B \kappa_1 + \vartheta_1^T B^T M +  (C^T + \vartheta_1^T D^T)P D \kappa_1 -  S^T \kappa_1 - \vartheta_1^T R \kappa_1 = 0 \\ 
+     \frac{\d N}{\d t} + \kappa_1^T B^T M + \frac12  \kappa_1^T D^T P D \kappa_1 - \frac12 \kappa_1^T R \kappa_1 = 0,
+\end{align*}
+where $\vartheta_1$ and $\kappa_1$ are given by \eqref{eq: theta_kappa_primal_hjb}:
+\begin{equation*}
+    \vartheta_1 = \big( D^T P D - R\big)^{-1} \big(S - B^T P -  D^T P C \big), \quad \kappa_1 = -\big( D^T P D + R\big)^{-1} B^T M 
+\end{equation*}
+and the terminal conditions are given by \eqref{eq: primal_hjb_terminal_conds}:
+\begin{equation}
+    P(T) = -G(T), \quad M(T) = - L(T), \quad N(T) = 0.
+\end{equation}
+
+\subsection{Dual Problem for for 1-Dimensional Brownian Motion Case}
+The value function for the dual problem is given by 
+\begin{equation*}
+    \Tilde{v}(t, y) = \frac12 y^T \Tilde{P} y + y^T \Tilde{M} + \Tilde{N},
+\end{equation*}
+where $\tilde{P}(t), \tilde{M}(t)$ and $\tilde{N}(t)$ are solutions to the system of ODEs \eqref{eq: dual_hjb_sol1}, \eqref{eq: dual_hjb_sol2}, \eqref{eq: dual_hjb_sol3} (in the $d=1$ case):
+\begin{align*}
+     \frac{\d \tilde{P}}{\d t} + 2\tilde{\vartheta}^T \tilde{P} - 2A \tilde{P}  - 2\tilde{\vartheta}_1^T C \tilde{P} +  \tilde{\vartheta}_1^T \tilde{P} \tilde{\vartheta}_1 -  \tilde{\vartheta}^T \tilde{Q}\tilde{\vartheta} - 2\tilde{\vartheta}^T \tilde{S}^T \big(B^T + D^T \tilde{\vartheta}_1 \big)
+    - \ (B + \tilde{\vartheta}_1^T D) \tilde{R} (B^T + D^T \tilde{\vartheta}_1) = 0\\
+    \frac{\d \tilde{M}}{\d t} + \tilde{P} \tilde{\kappa} - \tilde{P} C^T \tilde{\kappa}_1 + \tilde{\vartheta}^T \tilde{M} - A\tilde{M} - \tilde{\vartheta}_1^T C \tilde{M} 
+    + \tilde{\vartheta}_1 \tilde{P} \tilde{\kappa}_1 - \tilde{\vartheta}^T \tilde{Q} \tilde{\kappa} - \tilde{\vartheta}^T \tilde{S}^T  D^T \tilde{\kappa}_1\\
+    - \big(B + \tilde{\vartheta}_1^T D \big)\tilde{S}\tilde{\kappa} - \big( B +  \tilde{\vartheta}_1^T D \big) \tilde{R} D^T \tilde{\kappa}_1 = 0 \\
+    \frac{\d \tilde{N}}{\d t} + \tilde{\kappa}^T \tilde{M} - \tilde{\kappa}_1^T C \tilde{M} + \frac12 \tilde{\kappa}_1^T \tilde{P} \tilde{\kappa}_1 - \frac12 \tilde{\kappa}^T \tilde{Q}\tilde{\kappa} - \tilde{\kappa}^T \tilde{S}^T D^T\tilde{\kappa}_1 - \frac12 \tilde{\kappa}_1^T D \tilde{R}  D^T \tilde{\kappa}_1 = 0 
+\end{align*}
+where $\tilde{\vartheta}, \tilde{\kappa}$ and $\tilde{\vartheta}_1, \tilde{\kappa}_1$ are solutions to the system \eqref{eq: dual_hjb_system_controls_2}
+\begin{equation*}
+\begin{cases}
+    &\tilde{P}y + \tilde{M} - \tilde{Q}(\tilde{\vartheta}y + \kappa) - \tilde{S}^T B^T y - \tilde{S}^T D^T (\tilde{\vartheta}_1 y + \kappa_1) = 0\\
+    &C (\tilde{P}y + \tilde{M}) - \tilde{P} (\tilde{\vartheta}_1 y + \kappa_1)
+    + D \tilde{S}(\tilde{\vartheta}y + \kappa) + D\tilde{R}B^T y +  D\tilde{R} D^T (\tilde{\vartheta}_1 y + \kappa_1) = 0
+\end{cases} 
+\end{equation*}
+and the terminal conditions are given by \eqref{eq: dual_hjb_terminal_conditions}:
+\begin{equation*}
+    \tilde{P}(T) = -G^{-1}(T), \quad \tilde{M}(T) = - G^{-1}(T)L(T), \quad \tilde{N}(T) = - \frac12 L^T(T)G^{-1}(T)L(T).
+\end{equation*}
+
+\subsection{Runge-Kutta Method}
+Next, we will describe the method employed to resolve the two systems of ordinary differential equations (ODEs). For ease of understanding, let's set $n=2$, which implies that $X$ exists within a two-dimensional space. We also assume the coefficients $A(t), B(t), C(t), D(t)$ to be time-independent, meaning they're constant, and we further take them to be symmetric.\\
+
+Our initial focus lies on the equations for $P$ and $\tilde{P}$. The solution to these ODEs is achieved via the Runge-Kutta method. It's important to highlight that in our situation, both $P$ and $\tilde{P}$ are represented as $2 \times 2$ matrices. We omit the details of the method, as it is a widely-used approach for solving such ODEs.\\
+
+From \eqref{eq: primal_dual_relationship} we know that the relationship between $P$ and $\Tilde{P}$ is given by
+\begin{equation*}
+    P = \Tilde{P}^{-1}.
+\end{equation*}
+As the matrices $P$ and $\Tilde{P}$ are symmetric $2 \times 2$ matrices, we only show the solution for the $2$ distinct elements (in our case we have simplified the coefficients so that we only get two distinct values in $P$ and $\Tilde{P}$). The results are shown below:
+%\begin{center}
+%    \includegraphics[width=\textwidth]{figures/P_P_tilde_odes.png}
+%\end{center}
+We are considering the time interval from $0$ to $1$ which we have divided into $200$ time-steps. As we can see from the plots, the solutions for $P$ and $\Tilde{P}^{-1}$ are identical, as expected from the analytically derived results. \\
+
+After having obtained the solutions for $P$ and $\Tilde{P}$, we can then compute the solutions for $M$ and $\Tilde{M}$ using the same method. Note that we needed to compute the ODEs for $P$ and $\tilde{P}$ first, as their solutions are part of the ODEs for the rest of the parameters. From \eqref{eq: primal_dual_relationship} we know that the relationship between $M$ and $\Tilde{M}$ is given by
+\begin{equation*}
+    \Tilde{M} = -\tilde{P} M.
+\end{equation*}
+Our numerical solutions give us the following 
+%\begin{center}
+%    \includegraphics[width=\textwidth]{figures/M_M_tilde_odes.png}
+%\end{center}
+As we can see, the last two plots are identical, confirming our analytical results. Very similar results can be shown for the ODEs for $N$ and $\Tilde{N}$. \\
+
+While these results are a mere confirmation for the $1$-dimensional Brownian motion case of our analytical results, we will make use of this method when we employ the BSDE Deep learning algorithm to this problem in chapter \ref{sec:2bsde}, which is essentially an alternative way to reach the optimal control. The Runge-Kutta solution will help us compare these analytical results with the BSDE method results. \\
+
+If we wish to work in the setting of Chapter 2, i.e. the case where the coefficients depend on a continuous-time finite state space Markov chain, we simply need to consider multiple systems of ODEs corresponding to each state of the chain, which can be done using the same methods as here.
+
+
+

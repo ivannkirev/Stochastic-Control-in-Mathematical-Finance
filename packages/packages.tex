@@ -1,0 +1,48 @@
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\p}{\mathbb{P}}
+\newcommand{\tr}{\text{tr}}
+\let\d\relax
+\newcommand{\d}{\mathop{}\!\mathrm{d}}
+\newcommand\numberthis{\addtocounter{equation}{1}\tag{\theequation}}
+
+\usepackage{bm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{amsmath, amssymb, amsthm}
+\usepackage{mathtools}
+\usepackage{titlesec}
+\usepackage[capitalise]{cleveref}
+
+
+\theoremstyle{definition}
+\newtheorem{assumption}{Assumption}[section]
+\newtheorem{remark}{Remark}[section]
+\newtheorem{assumptions}{Assumptions}[section]
+
+
+\theoremstyle{plain}
+\newtheorem{definition}{Definition}[section]
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+
+\theoremstyle{remark}
+\newtheorem*{proofsketch}{Proof Sketch}
+
+
+
+% Example: make section titles smaller
+\titleformat{\chapter}
+  {\normalfont\fontsize{20}{16}\bfseries}{\thechapter}{1em}{}
+
+\titleformat{\section}
+  {\normalfont\fontsize{16}{14}\bfseries}{\thesection}{1em}{}
+
+\titleformat{\subsection}
+  {\normalfont\fontsize{12}{13}\bfseries}{\thesubsection}{1em}{}
+
+\titleformat{\subsubsection}
+  {\normalfont\fontsize{10}{12}\bfseries}{\thesubsubsection}{1em}{}

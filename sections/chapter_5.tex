@@ -1,0 +1,237 @@
+\chapter{Constrained Optimisation with Convex Running Cost} \label{sec: general}
+
+In this section, we return to the framework of Chapter \ref{Unconstrained Optimisation with Quadratic Running Cost}, however, now we impose constraints on the control and no longer consider quadratic cost functions. This general framework is as described in \cite{Duality_Method_for_Multidimensional_Nonsmooth_Constrained_Linear_Convex_Stochastic_Control}. In this case, we no longer have an analytical solution to the problem, however, we can derive a useful dual-primal relationship, which will help us later with implementing the Deep BSDE algorithm. 
+
+\subsection{Primal and Dual HJB \texorpdfstring{$\&$ } BBSDE Methods}
+\subsubsection{Primal HJB Equation}
+The HJB equation is the same as in section \ref{Derivation of HJB equation} (derivation taken from \cite{Pham}), except that the supremum is taken over the set $K$ instead of the whole space $\R^m$. Similar to the unconstrained case, we define the value function $v: [t_0, T] \times \R^n \to \R$ as
+\begin{equation*}
+    v(t,X(t)) = \sup_{\pi \in K} \E \bigg[ \int_{t_0}^T - f(t, X(t), \pi(t)) \d t - g(X(T))  \bigg]
+\end{equation*}
+The HJB is then given by:
+\begin{equation}
+    \frac{\partial v}{\partial t} (t,x) + \sup_{\pi \in K} \big\{F(t, x, \pi, D_x[v], D_x^2[v]) \big\} = 0 \label{eq: constrained_primal_hjb_equation}
+\end{equation}
+where the Hamiltonian $F$ is defined as 
+\begin{equation*}
+    F(t, x, \pi, D_x[v], D_x^2[v] ) = (AX + B \pi)^T D_x [v(t, x(t))] + \frac12 (C x + D \pi)^T D_x^2[v(t,x)] (C x + D \pi) - f(t, x, \pi)
+\end{equation*}
+and the terminal condition is given by:
+\begin{equation*}
+    v(T,x) = - g(x).
+\end{equation*}
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%% PRIMAL BSDE %%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsection{Primal BSDE}
+This section is adapted from \cite{Duality_Method_for_Multidimensional_Nonsmooth_Constrained_Linear_Convex_Stochastic_Control}. Proofs and details of the Stochastic Maximum Principle can be found in \cite{The_Stochastic_Maximum_Principle_for_Linear_Convex_Optimal_Control_with_Random_Coefficients}. To state the SMP, we need the following assumption:\\
+
+Let $(\hat{X}, \hat{\pi})$ be admissible pair satisfying 
+\begin{equation*}
+    \E \bigg[ \int_{t_0}^T |D_x[f(t, \hat{X}(t), \hat{\pi}(t))]|^2 \d t \bigg] < \infty \quad \text{and} \quad \E \bigg[ \int_{t_0}^T |D_x[g(\hat{X}(T))]|^2 \d t \bigg] < \infty .
+\end{equation*}
+For any admissible pair $(X, \pi)$, there exists $Z \in \mathcal{P}([t_0, T], \R)$ and an $\mathcal{F}_T$-measurable random variable $\Tilde{Z}$ satisfying $\E \int_{t_0}^T |Z(t)| \d t < \infty$, $\E |\Tilde{Z}| < \infty$ such that
+\begin{align*}
+    Z(t) &\ge \frac{f(t, \hat{X}(t) + \varepsilon(X(t) - \hat{X}(t)), \hat{\pi}(t) + \varepsilon(\pi(t) - \hat{\pi}(t))) - f(t, \hat{X}(t), \hat{\pi}(t))}{\varepsilon}\\
+    \Tilde{Z} &\ge \frac{g(\hat{X}(T) + \varepsilon(X(T) - \hat{X}(T))) - g(\hat{X}(T))}{\varepsilon}
+\end{align*}
+for $(\mathbb{P} \, \otimes \, Leb)-a.e.$ $(\omega, t) \in \Omega \times [t_0, T]$ and $\varepsilon \in (0, 1]$.\\
+
+We define the generalised Hamiltonian $\mathcal{H} :\Omega \times [t_0, T] \times \R^n \times K \times R^n \times \R^{n} \to \R$ by
+\begin{align*}
+    \mathcal{H}(t, x, \pi, p, q) = x^T A^T p + \pi^T B^T p + \bigg( x^T C^T  +  \pi^T D^T \bigg) q - f(t,x,\pi).
+\end{align*}
+
+The adjoint process is given by
+\begin{equation}
+\begin{cases}
+            \d {p} &= -D_x[\mathcal{H}(t, X(t), \pi(t), p(t), q(t))] \d t + q(t) \d W(t)\\
+            &= -\big[ A^T p + C^T q - D_x[f(t, X, \pi)] \big] \d t +  q(t) \d W(t)\\
+            {p}(T) &= - D_x [g({X}(T))]
+        \end{cases} \label{eq: constrained_primal_adjoint_process}
+\end{equation}
+The Stochastic Maximum Principle for problem \eqref{eq: constrained_primal_optimisation_problem} states that if $X$ is the solution to \eqref{eq: constrained_x_sde} and $p, q$ are the solution to the adjoint process \eqref{eq: constrained_primal_adjoint_process}, then $\hat{\pi} \in \mathcal{A}$, such that the assumption above holds, is optimal if and only if it satisfies the condition
+\begin{equation*}
+     \mathcal{H}(t, X(t), \hat{\pi}(t), p(t), q(t)) = \sup_{\pi \in K} \mathcal{H}(t, X(t), {\pi}(t), p(t), q(t))
+\end{equation*}
+for $(\mathbb{P} \, \otimes \, Leb)-a.e.$ $(\omega, t) \in \Omega \times [t_0, T]$. Moreover, if $D_\pi[f]$ exists, then this conditions is equivalent to
+\begin{equation*}
+    [\hat{\pi} - \pi]^T \bigg[ B^T p + D^T q - D_\pi [f(t, X, \hat{\pi})] \bigg] \ge 0, \quad \forall \pi \in K.
+\end{equation*}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%% DUAL HJB %%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Dual HJB Equation}
+Recall that the dual process $Y(t)$ satisfies the SDE \eqref{eq: constrained_y_sde}:
+\begin{equation*}
+    \begin{cases}
+        \d Y(t) &= \big[ \alpha(t) - A(t)^T Y(t) - C^T(t) \beta_1(t)\big]\d t + \beta_1(t) \d W(t)\\
+        Y(t_0) &= y,
+    \end{cases}
+\end{equation*}
+and also recall from \eqref{eq: constrained_dual_value_function_1} that the dual value function is given by
+\begin{equation*}
+    \Tilde{v}(t, Y(t)) = \sup_{\alpha, \beta_1} \E \bigg[ \int_{t_0}^T - \phi(t, \alpha, \beta) \d t - h(Y(T)) \bigg]
+\end{equation*}
+where $\beta = B^T Y + D^T \beta_1$ and $\phi$ and $h$ are given by \eqref{eq: constrained_phi_1} and \eqref{eq: constrained_h_1}:
+\begin{align*}
+    \phi(t, \alpha, \beta)&= \sup_{x, \pi} \big\{x^T \alpha + \pi^T \beta - \tilde{f}\/(t, x, \pi) \big\}\\
+    h(y) &= \sup_x \big\{-x^T y - g(x)\big\}. 
+\end{align*}
+Then, using the same reasoning as in section \ref{Dual HJB Equation}, the dual HJB equation is given by 
+\begin{equation*}
+    \frac{\partial \tilde{v}}{\partial t} (t, y) + \sup_{\alpha, \beta_1} \big[\mathcal{L}^{\alpha, \beta_1}[\tilde{v}(t,y)] - \phi(t, \alpha, \beta) \big] = 0,
+\end{equation*}
+where the generator is given by
+\begin{equation*}
+    \mathcal{L}^{\alpha, \beta_1}[\tilde{v}(t, y)] = \big(\alpha^T - y^T A -\beta_1^T C\big)D_y[\tilde{v}] + \frac12 \beta_1^T D_y^2[\tilde{v}] \beta_1,
+\end{equation*}
+and the terminal condition is
+\begin{equation*}
+    \tilde{v}(T,y) = - h(y).
+\end{equation*}
+If we assume that $n < m$ and $rank(D(t)) = n$. Then $D^\dagger(t) := D^T(t) (D(t) D^T(t))^{-1} \in \R^{m \times n}$ is the Moore-Penrose inverse of $D$ and satisfied $D D^\dagger = I_n$. From \eqref{eq: constrained_beta_relation} we can write 
+\begin{equation*}
+    \beta_1(t) = (D^\dagger)^T(t) \big(\beta(t) - B^T(t) Y(t)\big)
+\end{equation*}
+Then the HJB equation is given by
+\begin{align*}
+    \frac{\partial \tilde{v}}{\partial t} (t, y) + \sup_{\alpha, \beta} \bigg\{ - \phi(t, \alpha, \beta) + \big(\alpha^T - y^T A - \big(\beta(t) - B^T(t) Y(t)\big)^T D^\dagger(t) C\big)D_y[\tilde{v}]\\
+    + \frac12 \big(\beta(t) - B^T(t) Y(t)\big)^T D^\dagger(t) D_y^2[\tilde{v}] (D^\dagger)^T(t) \big(\beta(t) - B^T(t) Y(t)\big)  \bigg\} = 0.
+\end{align*}
+
+
+
+
+
+
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%% DUAL BSDE %%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Dual BSDE}
+This section is once again adapted from \cite{Duality_Method_for_Multidimensional_Nonsmooth_Constrained_Linear_Convex_Stochastic_Control}. To state the Stochastic Maximum Principle for the dual problem, we need a similar assumption to that of the primal problem:\\
+
+Let $(\hat{Y}, \hat{\alpha}, \hat{\beta}_1)$ be a given admissible dual pair. For any admissible pair $(Y, \alpha, \beta_1)$, there exists $Z \in \mathcal{P}([t_0, T], \R)$ and an $\mathcal{F}_T$-measurable random variable $\Tilde{Z}$ satisfying $\E \int_{t_0}^T |Z(t)| \d t < \infty$, $\E |\Tilde{Z}| < \infty$ such that
+\begin{align*}
+    Z(t) &\ge \frac{\phi(t, \hat{\alpha} + \varepsilon \alpha, \hat{\beta} + \varepsilon \beta) - \phi(t, \hat{\alpha}, \hat{\beta})}{\varepsilon}\\
+    \Tilde{Z} &\ge \frac{h(\hat{Y}(T) + \varepsilon Y(T))  - h(\hat{Y}(T))}{\varepsilon}
+\end{align*}
+for $(\mathbb{P} \, \otimes \, Leb)-a.e.$ $(\omega, t) \in \Omega \times [t_0, T]$ and $\varepsilon \in (0, 1]$. Furthermore, $h$ is $C^1$ in $y$ and satisfies $\E[D_y[h^2(Y(T))]] < \infty$. \\
+
+The Hamiltonian $\tilde{\mathcal{H}}: [t_0, T] \times \R^n \times \R^{n}\times \R^n \times \R^n \times \R^{n} \to \R$ for the dual problem is defined as
+\begin{align*}
+    \tilde{\mathcal{H}}(t, Y, \alpha, \beta_1, p, q) 
+    &=  p^T(\alpha - A^T Y - C^T \beta_1) +  \beta_1^T q -\phi \bigg(t, \alpha, B^T Y + D^T \beta_1 \bigg)\\
+    &= p^T\alpha - p^T A^T Y - p^T C^T\beta_1   + \beta_1^T q - \phi \bigg(t, \alpha, B^T Y + D^T \beta_1 \bigg)
+\end{align*}
+If $\phi$ is $C^1$ in $\beta$, and under the assumption above, then the adjoint equation is given by the system
+\begin{equation}
+    \begin{cases}
+        \d p(t) &= -D_y [\tilde{\mathcal{H}}(t, Y(t), \alpha(t), \beta_1(t), p(t), q(t))] \d t + q(t) \d W(t)  \\
+        &= \big[A(t) p(t) + B(t) D_{\beta} [\phi (t, \alpha(t), B^T(t) Y(t) + D^T(t) \beta_1(t) )] \big] \d t + q(t) \d W(t)\\
+        p(T) &= - D_y[h(Y(T))].
+    \end{cases} \label{eq: constrained_dual_adjoint_process_1} 
+\end{equation}
+According to the Stochastic Maximum Principle, the optimal controls $\hat{\alpha}, \hat{\beta}_1$ satisfy the condition
+\begin{equation*}
+     \tilde{\mathcal{H}}(t, Y(t), \hat{\alpha}(t), \hat{\beta}_1(t), p(t), q(t))  = \sup_{\alpha, \beta_1}  \tilde{\mathcal{H}}(t, Y(t), \alpha(t), \beta_1(t), p(t), q(t)).
+\end{equation*}
+If, however, the condition that $\phi$ is differential in $\beta$ is not satisfied, then the adjoint equation is not well defined. We consider the following additional assumption:\\
+
+Assume that $n < m$ and $rank(D(t)) = n$. Then $D^\dagger(t) := D^T(t) (D(t) D^T(t))^{-1} \in \R^{m \times n}$ is the Moore-Penrose inverse of $D$ and satisfied $D D^\dagger = I_n$. From \eqref{eq: constrained_beta_relation} we can write 
+\begin{equation*}
+    \beta_1(t) = (D^\dagger)^T(t) \big(\beta(t) - B^T(t) Y(t)\big)
+\end{equation*}
+Using this and \eqref{eq: constrained_y_sde}, the dual process $Y$ satisfies the following SDE:
+\begin{align}
+\begin{cases}
+    \d Y(t) = &\big[ \alpha(t) - A(t)^T Y(t) - C^T(t) (D^\dagger)^T(t) \big(\beta(t) - B^T(t) Y(t)\big)\big]\d t\\
+    &\quad \quad \quad \quad \quad \quad \quad \quad \quad \quad + (D^\dagger)^T(t) \big(\beta(t) - B^T(t) Y(t)\big) \d W(t)\\
+    Y(t_0) = &y,
+\end{cases} \label{eq: constrained_y_sde_2}
+\end{align}
+The dual optimisation problem \eqref{eq: constrain_dual_control_problem} is now equivalent to
+\begin{equation}
+    \inf_{y, \alpha, \beta} \bigg \{ x^T y + \E \bigg[ \int_{t_0}^T \phi(t, \alpha(t), \beta(t) \d t + h(Y(T)) \bigg] \bigg\}. \label{eq: constrained_dual_optimisation_problem}
+\end{equation}
+The adjoint equation associated with $(t, \alpha, \beta)$ and $Y$ in \eqref{eq: constrained_y_sde_2} is given by
+\begin{equation}
+    \begin{cases}
+        \d p &= \big[ (A(t) - B(t) D^\dagger
+        (t) C(t)) p(t) + B(t) D^\dagger(t) q(t) \big] \d t + q(t) \d W(t)\\
+        p(T) &= - D_y[h(Y(T))]
+    \end{cases} \label{eq: constrained_dual_adjoint_process_2}
+\end{equation}
+The Stochastic Maximum Principle for the process \eqref{eq: constrained_y_sde_2} with the adjoint process \eqref{eq: constrained_dual_adjoint_process_2} states that $(\hat{y}, \hat{\alpha}, \hat{\beta})$ are optimal for the dual problem \eqref{eq: constrained_dual_optimisation_problem} if and only if the following conditions are satisfied:
+\begin{equation}
+    \begin{cases}
+        &p(t_0) = x\\
+        &(p, D^\dagger q - D^\dagger C p) \in \partial \phi(\hat{\alpha}, \hat{\beta})\\
+        &D^\dagger q - D^\dagger C p \in K
+    \end{cases} \label{eq: constrained_control_conditions_optimality}
+\end{equation}
+for $(\mathbb{P} \otimes Leb) - a.e.$ $(\omega, t) \in \Omega \times [t_0, T]$, where $\partial \phi(\hat{\alpha}(t), \hat{\beta}(t))$ is the sub-differential of $\phi$ at $(\hat{\alpha}(t), \hat{\beta}(t))$.
+
+\newpage
+\subsection{Primal-Dual Relation}
+In this section, we state some results on the dual-primal relation. We need to assume that the function $D_x[g](\omega, \cdot) : \R^n \to \R^n$ is a bijection for any $\omega$ such that $z = - D_x[g(x)]$ if and only if $x = -D_y[h(z)]$, that is, the inverse function of $-D_x[g]$ is $-D_y[h]$.\\
+
+We first show how we can recover the primal optimal solution from that of the dual problem. Proof of this statement can be found in \cite{Duality_Method_for_Multidimensional_Nonsmooth_Constrained_Linear_Convex_Stochastic_Control}.\\
+
+Suppose that $(y, \alpha, \beta)$ is optimal for the dual problem \eqref{eq: constrained_dual_optimisation_problem}, and let $(Y, p_{\text{dual}}, q_{\text{dual}})$ be the associated state and adjoint processes in \eqref{eq: constrained_y_sde_2} and \eqref{eq: constrained_dual_adjoint_process_2}. Define
+\begin{equation}
+    \pi(t) := D^\dagger(t) q_{\text{dual}}(t) - D^\dagger(t) C(t) p_{\text{dual}}, \quad t \in [t_0, T]. \label{eq: pi_from_dual_bsde}
+\end{equation}
+Then $\pi(t)$ is the optimal control for the primal problem \eqref{eq: constrained_primal_optimisation_problem}. Further, for $t \in [t_0, T]$, the optimal state and associated adjoint processes satisfy
+\begin{equation*}
+    \begin{cases}
+        X(t) = p_{\text{dual}}(t)\\
+        p_{\text{primal}}(t) = Y(t)\\
+        q_{\text{primal}}(t) = (D^\dagger)^T(t) \big( \beta(t) - B^T Y(t) \big),
+    \end{cases}
+\end{equation*}
+where $p_{\text{primal}}$ and $q_{\text{primal}}$ denote the adjoint processes associated with the primal problem. \\
+
+We can also recover the dual optimal solution from the primal. Suppose that $\pi(t) \in \mathcal{A}$ is optimal for the primal problem \eqref{eq: constrained_primal_optimisation_problem} and let $(X, p_{primal}, q_{primal})$ be the associated state and adjoint processes in \eqref{eq: constrained_x_sde} and \eqref{eq: constrained_primal_adjoint_process}. Define
+\begin{equation*}
+    \begin{cases}
+        y = p_{primal}(0)\\
+        \alpha(t) = D_x[f(t, X(t), \pi(t))]\\
+        \beta(t) = B^T(t) p_{primal}(t) + D^T(t) q_{primal}(t)
+    \end{cases}
+\end{equation*}
+Then $(y, \alpha(t), \beta(t))$ is the optimal control of the dual problem \eqref{eq: constrained_dual_optimisation_problem}. For $y \in [t_0, T]$, the optimal dual state process and associated adjoint processes satisfy
+\begin{equation*}
+    \begin{cases}
+        Y(t) = p_{primal}(t)\\
+        p_{dual}(t) = X(t)\\
+        D^\dagger(t) q_{dual} (t) = \pi(t) + D^\dagger (t) C(t) X(t).
+    \end{cases}
+\end{equation*}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,766 @@
+\chapter{Unconstrained Optimisation with Quadratic Running Cost}
+\label{sec:unconstrained}
+
+In this chapter, we adopt the structural framework introduced in \cite{Duality_Method_for_Multidimensional_Nonsmooth_Constrained_Linear_Convex_Stochastic_Control}, which employs the Stochastic Maximum Principle for solving optimal control problems. Additionally, we explore the partial differential equation (PDE) approach via the Hamilton-Jacobi-Bellman (HJB) equation, as presented in \cite{Pham}. We modify the problem structure by incorporating a quadratic running cost, which enables analytical tractability and facilitates explicit computations, as demonstrated in the following sections.
+
+\section{Solving the Primal Problem}
+
+\subsection{HJB Method}
+
+\subsubsection{Derivation of HJB equation}\label{Derivation of HJB equation}
+We transform the minimisation problem to maximisation by noting that
+\begin{equation*}
+     \inf_{\pi(t) \in \R^m} \E \bigg[ \int_{t_0}^T f(t, X(t), \pi(t)) \d t + g(X(T))\bigg] = - \sup_{\pi(t) \in \R^m} \E \bigg[ \int_{t_0}^T - f(t, X(t), \pi(t)) \d t - g(X(T))\bigg],
+\end{equation*}
+and denote the value function 
+\begin{equation}
+    v(t, X(t)) = \sup_{\pi(t) \in \R^m} \E \bigg[ \int_{t_0}^T - f(t, X(t), \pi(t)) \d t - g(X(T))\bigg]
+\end{equation}
+Note that the optimal value of the optimisation problem is given by $-v(t,X(t))$. Consider the time interval $(t, t + h)$ and a constant control $\pi(t) = \pi$. According to the Dynamic programming principle,
+\begin{equation}
+    v(t, X(t)) \ge \E \bigg[ \int_{t}^{t+h} - f(s, X(s), \pi) \d s + v(t+h, X(t + h)) \bigg],
+    \label{eq: 1}
+\end{equation}
+where we denote $X(s)$ to be the solution of \eqref{eq: primal_sde2} given that we know the value of $X$ at time $t$.\\
+
+Applying Ito's formula between $t$ and $t+h$ we get
+\begin{align*}
+    v(t+h, X(t+h)) = v(t, X(t)) &+ \int_t^{t+h} \bigg( \frac{\partial v(s, X(s))}{\partial t} + \mathcal{L}^\pi [v(s, X(s)] \bigg) \d s\\
+    &+ \underbrace{\int_{t}^{t+h} \big[D_x v(s, X(s))\big]^T \sigma(s, X(s), \pi) \d W(s)}_{\text{(local) martingale}},
+\end{align*}
+where $\mathcal{L}^\pi[v(t,x)]$ is the generator given by
+\begin{equation}
+    \mathcal{L}^\pi [v(t, X(t))] 
+    = b^T(t, X(t), \pi) D_x v(t, X(t)) + \frac12 \tr\big[\sigma(t, X(t), \pi) \sigma^T(t, X(t), \pi) D_x^2 v(t, X(t))\big]
+    \label{eq: generator}
+\end{equation}
+Substituting into equation \eqref{eq: 1}, we get 
+\begin{equation*}
+    0 \ge \E \bigg[ \int_{t}^{t + h} \frac{\partial v}{\partial t}(s, X(s)) + \mathcal{L}^\pi[v(s, X(s))] - f(s, X(s), \pi) \d s \bigg]
+\end{equation*}
+Dividing by $h$ and sending $h$ to $0$, this yields by the mean value theorem 
+\begin{equation*}
+    0 \ge \frac{\partial v}{\partial t}(t, x) + \mathcal{L}^\pi[v(t,x)] - f(t, x, \pi).
+\end{equation*}
+Since this is true for any admissible $\pi$, we obtain the inequality
+\begin{equation}
+    \frac{\partial v}{\partial t} (t, x) + \sup_{\pi \in \R^m} [\mathcal{L}^\pi v(t,x) - f(t, x, \pi)] \le 0.
+    \label{eq: 2}
+\end{equation}
+On the other hand, suppose that $\pi^*$ is an optimal control. Then by the dynamic programming principle, 
+\begin{equation}
+    v(t,x) = \E\bigg[ \int_{t}^{t+h} - f(s, X^*(s), \pi^*(s)) \d s + v(t+h, X^*(t+h)) \bigg],
+\end{equation}
+where $X^*$ is the solution to the initial SDE \eqref{eq: primal_sde2} with control $\pi^*$ starting from $x$ at time $t$. By similar reasoning, we get 
+\begin{equation*}
+    \frac{\partial v}{\partial t} (t,x) + \mathcal{L}^{\pi^*} [v(t,x)] - f(t, x, \pi^*) = 0
+\end{equation*}
+which combined with \eqref{eq: 2} suggests that $v$ should satisfy
+\begin{equation}
+    \frac{\partial v}{\partial t} (t,x) + \sup_{\pi \in \R^m} [\mathcal{L}^{\pi(t)} [v(t,x)] - f(t, x, \pi)] = 0, \quad \forall (t,x) \in [t_0, T) \times \R^n.
+    \label{eq: hjb_inf}
+\end{equation}
+with the terminal condition:
+\begin{equation*}
+    v(T,x) = - g(x) = - \frac12 x^T G(T) x - x^T L(T), \quad \forall x \in \R^n.
+\end{equation*}
+Equation \eqref{eq: hjb_inf} is called the Hamilton-Jacobi-Bellman equation.
+\subsubsection{Finding the Optimal Control}
+The supremum in the HJB equation \eqref{eq: hjb_inf} can be found by setting the derivative with respect to $\pi$ to zero. The derivative of the generator $\mathcal{L}^{\pi}$, $D_\pi [\mathcal{L}^\pi]  \in \R^m$, is given by:
+\begin{equation}
+    D_{\pi} \big[ \mathcal{L}^{\pi}[v(t, x)]\big] = D_{\pi} \big[ b(t,x, \pi)^T D_x[v(t,x)] \big] + D_\pi \bigg[ \frac12 \tr (\sigma(t, x,\pi) \sigma^T(t, x, \pi) D^2_x[v(t,x)])\bigg].
+    \label{eq: generator_derivative}
+\end{equation}
+We have that 
+\begin{align*}
+    D_\pi \big[ b^T(t,x, \pi) D_x[v(t,x)] \big] 
+    &= D_\pi \big[(x^T A^T(t) + \pi^T(t) B^T(t)) D_x[v(t,x)] \big]\\
+    &= B^T(t) D_x [v(t,x)] \numberthis \label{eq: derivative_1}
+\end{align*}
+The latter derivative in \eqref{eq: generator_derivative} is given by:
+\begin{align*}
+    D_\pi \bigg[ \frac12 \tr[\sigma(t,x,\pi) \sigma^T(t,x,\pi) D_x^2[v]] \bigg]
+    &= \frac12 D_\pi \bigg[ \tr\bigg[ \sum_{i=1}^d (C_i x + D_i \pi)(C_i x + D_i \pi)^T D_x^2[v] \bigg] \bigg]\\
+    &= \frac12 \sum_{i=1}^d D_\pi \big[ \tr[(C_i x + D_i \pi)(C_i x + D_i \pi)^T D_x^2[v]] \big]\\
+    &= \frac12 \sum_{i=1}^d D_\pi \big[(C_i x + D_i \pi)^T D_x^2[v](C_i x + D_i \pi)\big] \\
+    &= \sum_{i=1}^d D_i^T D_x^2[v(t,x)] (C_i x + D_i \pi) \numberthis \label{eq: derivative_2}
+\end{align*}
+The derivative of $f(t,x,\pi)$ with respect to $\pi$ is 
+\begin{equation}
+    D_\pi f(t, x, \pi) = S x + R \pi \label{eq: derivative_3}
+\end{equation}
+Combining the three equations,\eqref{eq: derivative_1}, \eqref{eq: derivative_2}, \eqref{eq: derivative_3}, we get that
+\begin{equation*}
+    D_\pi [\mathcal{L}^\pi(t)[v(t,x)] - f(t,x,\pi)]
+    = B^T D_x[v(t,x)] + \sum_{i=1}^d D_i^T D_x^2[v(t,x)] (C_i x + D_i \pi) - S x - R \pi
+\end{equation*}
+Setting this to zero, we get
+\begin{equation}
+    \pi^\ast = \bigg[\sum_{i=1}^d D_i^T D_x^2[v(t,x)] D_i - R\bigg]^{-1} \bigg[S x - B^T D_x[v(t,x)] - \sum_{i=1}^d D_i^T D_x^2[v(t,x)] C_i x\bigg] \label{eq: control_optimal_primal_hjb}
+\end{equation}
+
+We now substitute \eqref{eq: control_optimal_primal_hjb} into \eqref{eq: hjb_inf} to get:
+\begin{equation*}
+    \frac{\partial v}{\partial t} + b(t, x, \pi^\ast)^T D_x[v] + \frac12 \tr \big[ \sigma(t, x, \pi^\ast) \sigma^T(t, x, \pi^\ast) D_x^2[v]\big] - \frac12 x^T Q x - \frac12 x^T S^T \pi^\ast - \frac12 {\pi^\ast}^T S x - \frac12 {\pi^\ast}^T R \pi^\ast = 0
+\end{equation*}
+As $D_x^2[v]$ is a symmetric matrix, we can write
+\begin{align*}
+    \tr \big[\sigma(t, x, \pi^\ast) \sigma^T(t, x, \pi^\ast) D_x^2[v] \big] &= \sum_{i=1}^d \tr \big[ (C_i x + D_i \pi^\ast)(C_i x + D_i \pi^\ast)^T D_x^2[v]  \big]\\
+    &= \sum_{i=1}^d (C_i x + D_i \pi^\ast)^T D_x^2[v](C_i x + D_i \pi^\ast),
+\end{align*}
+we get the HJB equation 
+\begin{align*}
+    \frac{\partial v}{\partial t} + (A x + B \pi^\ast)^T D_x[v] &+ \frac12 \sum_{i=1}^d (C_i x + D_i \pi^\ast)^T D_x^2[v](C_i x + D_i \pi^\ast)\\
+    &- \frac12 x^T Q x - \frac12 x^T S^T \pi^\ast - \frac12 {\pi^\ast}^T S x - \frac12 {\pi^\ast}^T R \pi^\ast = 0 \numberthis \label{eq: hjb_primal}
+\end{align*}
+where $\pi^\ast$ is as in \eqref{eq: control_optimal_primal_hjb} and the terminal condition is given by
+\begin{equation*}
+    v(T, x) = - g(x) = - \frac12 x^T G(T) x - x^T L(T). 
+\end{equation*}
+
+\subsubsection{Solving the Primal HJB Equation}
+We assume that $v(t,x)$ is a quadratic function in $x$ and we use the ansatz
+\begin{equation}
+    v(t,x) = \frac12 x^T P(t) x + x^T M(t) + N(t), 
+    \label{eq: ansatz_primal_hjb}
+\end{equation}
+with terminal conditions:
+\begin{equation}
+    P(T) = -G(T), \quad M(T) = - L(T), \quad N(T) = 0. \label{eq: primal_hjb_terminal_conds}
+\end{equation}
+Then 
+\begin{align*}
+    &\frac{\partial v}{\partial t}(t,x) = \frac12 x^T \dot{P}(t) x + x^T \dot{M}(t) + \dot{N}(t)\\
+    &D_x[v(t,x)] = P(t) x + M(t)\\
+    &D^2_x[v(t,x)] = P(t).
+\end{align*}
+Substituting in \eqref{eq: control_optimal_primal_hjb} we get the optimal control
+\begin{equation}
+    \pi^\ast = \bigg[\sum_{i=1}^d D_i^T P D_i - R\bigg]^{-1} \bigg[S x - B^T P x - B^T M - \sum_{i=1}^d D_i^T P C_i x\bigg] \label{eq: primal_hjb_optimal_control}
+\end{equation}
+We can write this as 
+\begin{equation*}
+    \pi^\ast = \vartheta_1 x + \kappa_1,
+\end{equation*}
+where
+\begin{equation}
+    \vartheta_1 = \bigg(\sum_{i=1}^d D_i^T P D_i - R\bigg)^{-1} \bigg(S - B^T P - \sum_{i=1}^d D_i^T P C_i \bigg), \quad \kappa_1 = -\bigg(\sum_{i=1}^d D_i^T P D_i + R\bigg)^{-1} B^T M \label{eq: theta_kappa_primal_hjb}
+\end{equation}
+Substituting this into \eqref{eq: hjb_primal}, we get 
+\begin{align*}
+    &\frac{\partial v}{\partial t} + (A x + B (\vartheta_1 x + \kappa_1))^T D_x[v] + \frac12 \sum_{i=1}^d (C_i x + D_i (\vartheta_1 x + \kappa_1))^T D_x^2[v](C_i x + D_i (\vartheta_1 x + \kappa_1))\\
+    &- \frac12 x^T Q x - \frac12 x^T S^T (\vartheta_1 x + \kappa_1) - \frac12 {(\vartheta_1 x + \kappa_1)}^T S x - \frac12 {(\vartheta_1 x + \kappa_1)}^T R (\vartheta_1 x + \kappa_1) = 0 \implies \\
+    &\frac12 x^T \dot{P} x + x^T \dot{M} + \dot{N} + (x^T A^T + x^T \vartheta_1^T B^T + \kappa_1^T B^T)(P x + M)\\
+    &+ \frac12 \sum_{i=1}^d (x^T C_i^T + x^T \vartheta_1^T D_i^T + \kappa_1^T D_i^T)P ( C_i x + D_i \vartheta_1 x + D_i \kappa_1)\\
+    &- \frac12 x^T Q x - \frac12 x^T S^T (\vartheta_1 x + \kappa_1) - \frac12 {(x^T \vartheta_1^T  + \kappa_1^T)} S x - \frac12 {(x^T \vartheta_1^T + \kappa_1^T)} R (\vartheta_1 x + \kappa_1) = 0
+\end{align*}
+Rewriting this, we get
+\begin{align*}
+    &x^T\bigg[ \frac12 \dot{P} + \frac12 A^T P + \frac12 P A + \frac12 \vartheta_1^T B^T P + \frac12 P B \vartheta_1 + \frac12 \sum_{i=1}^d (C_i^T + \vartheta_1^T D_i^T)P(C_i + D_i \vartheta_1)\\
+    &- \frac12 Q - \frac12 \vartheta_1^T S - \frac12 S^T \vartheta_1 - \frac12 \vartheta_1^T R \vartheta_1 \bigg]x + x^T \bigg[ \dot{M} + A^T M + P B \kappa_1 + \vartheta_1^T B^T M + \\
+    &\sum_{i=1}^d (C_i^T + \vartheta_1^T D_i^T)P D_i \kappa_1 -  S^T \kappa_1 - \vartheta_1^T R \kappa_1 \bigg] + \dot{N} + \kappa_1^T B^T M + \frac12 \sum_{i=1}^d \kappa_1^T D_i^T P D_i \kappa_1 - \frac12 \kappa_1^T R \kappa_1 = 0
+\end{align*}
+This equation must equal zero for all $x$, hence the coefficients in front of the quadratic term, as well as $x$ and the free coefficient must be zero. Setting the coefficients to zero, we get the system
+\begin{align*}
+     \frac12 \dot{P} + \frac12 A^T P + \frac12 P A + \frac12 \vartheta_1^T B^T P + \frac12 P B \vartheta_1 + &\frac12 \sum_{i=1}^d (C_i^T + \vartheta_1^T D_i^T)P(C_i + D_i \vartheta_1)\\
+     -& \frac12 Q - \frac12 \vartheta_1^T S - \frac12 S^T \vartheta_1 - \frac12 \vartheta_1^T R \vartheta_1 = 0 \numberthis \label{eq: primal_hjb_ricatti_1}\\
+     \dot{M} + A^T M + P B \kappa_1 + \vartheta_1^T B^T M + \sum_{i=1}^d (C_i^T + \vartheta_1^T D_i^T&)P D_i \kappa_1 -  S^T \kappa_1 - \vartheta_1^T R \kappa_1 = 0 \numberthis \label{eq: primal_hjb_ricatti_2}\\ 
+     \dot{N} + \kappa_1^T B^T M + \frac12 \sum_{i=1}^d \kappa_1^T D_i^T P D_i \kappa_1 - \frac12 \kappa_1^T R \kappa_1& = 0, \numberthis \label{eq: primal_hjb_ricatti_3}
+\end{align*}
+where $\vartheta_1$ and $\kappa_1$ are as in \eqref{eq: theta_kappa_primal_hjb} and the terminal conditions are as in \eqref{eq: primal_hjb_terminal_conds}.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%   PRIMAL BSDE   %%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newpage
+
+\subsection{BSDE Method}
+\subsubsection{Solution via the Primal BSDE}
+
+
+We define the Hamiltonian $\mathcal{H} :\Omega \times [t_0, T] \times \R^n \times \R^m \times R^n \times \R^{n\times d} \to \R$ by
+\begin{align*}
+    \mathcal{H}(t, x, \pi, p, q) 
+    &= b^T p + \tr (\sigma^T q) - f(t,x,\pi)\\
+    &= x^T A^T p + \pi^T B^T p + \sum_{i=1}^d \bigg( x^T C_i^T q_i +  \pi^T D_i^T q_i \bigg) - \frac12 x^T Q x -  x^T S^T \pi - \frac12 \pi^T R \pi \numberthis \label{eq: hamiltonian_primal}
+\end{align*}
+where we denote by $q_i \in \R^n$ the $i^{\text{th}}$ column of the matrix $q \in \R^{n \times d}$. The adjoint process is given by
+\begin{equation}
+\begin{cases}
+            \d {p} &= -D_x[\mathcal{H}(t, X(t), \pi(t), p(t), q(t))] \d t + \sum_{i=1}^d q_i(t) \d W_i(t)\\
+            %&= -\big[ A^T p + \sum_{i=1}^d C_i^T q_i - Q X(t) - S^T \pi \big] \d t + \sum_{i=1}^d q_i(t) \d W_i(t)\\
+            {p}(T) &= - D_x [g({X}(T))]= - G(T){X}(T) - L(T)
+        \end{cases}
+        \label{eq: fbsde_primal}
+\end{equation}
+According to the Stochastic Maximum Principle, the optimal control for the optimisation problem \eqref{eq: minimisation_problem} satisfies the condition
+    \begin{equation*}
+        D_\pi \mathcal{H}(t, X(t), {\pi}(t), p(t), q(t)) = 0.
+    \end{equation*}
+We have
+\begin{equation*}
+    D_\pi \mathcal{H}(t, X(t), \pi(t), p(t), q(t)) = B^T p + \sum_{i=1}^d D_i^T  q_i - S X - R\pi
+\end{equation*}
+so
+\begin{equation}
+    B^T p + \sum_{i=1}^d D_i^T q_i - S X -  R\pi = 0
+    \label{eq: hamiltonian_condition_primal}
+\end{equation}
+Solving this, we can find a linear solution for the control, which we denote by 
+\begin{equation}
+    \pi = \vartheta_2 X + \kappa_2.
+\end{equation}
+Substituting the control in the Hamiltonian \eqref{eq: hamiltonian_primal} we get
+\begin{align*}
+    \mathcal{H} = X^T A^T p + (\vartheta_2 X + \kappa_2)^T B^T p + \sum_{i=1}^d \bigg( X^T C_i^T q_i +  (\vartheta_2 X + \kappa_2)^T D_i^T q_i \bigg)
+    - \frac12 X^T Q X\\ - \frac12 X^T S^T (\vartheta_2 X + \kappa_2) - \frac12 (\vartheta_2 X + \kappa_2)^T S X
+    - \frac12 (\vartheta_2 X + \kappa_2)^T R (\vartheta_2 X + \kappa_2) \numberthis \label{eq: hamiltonian_primal_no_control}
+\end{align*}
+The derivative of the Hamiltonian is then 
+\begin{equation}
+    D_x[\mathcal{H}] = A^T p + \vartheta_2^T B^T p + \sum_{i=1}^d C_i^T q_i + \sum_{i=1}^d \vartheta_2^T D_i^T q_i - QX - 2S^T\vartheta_2 X - S^T \kappa_2 - \vartheta_2^T R \vartheta_2 X - \vartheta_2^T R \kappa_2 \label{eq: hamiltonian_derivative_primal}
+\end{equation}
+We try an ansatz for $p$ of the form
+\begin{equation*}
+    p = \varphi(t) X(t) + \psi(t),
+\end{equation*}
+where $\varphi(t) \in \R^{n \times n}$ and $\psi(t) \in R^n$. 
+Applying Ito's formula, we get
+\begin{align*}
+    \d p &= \frac{\partial f}{\partial t} \d t + (D_x[f])^T\d X + \frac{1}{2} (\d X)^T D_x^2[f] \d X\\
+    &= (\dot{\varphi} X + \dot{\psi}) \d t + \varphi \d X\\
+    &= (\dot{\varphi} X + \dot{\psi}  + \varphi b(t,X, \pi) ) \d t + \varphi \sigma(t, X, \pi) \d W\\
+    &= \big[\dot{\varphi} X + \dot{\psi} + \varphi A X + \varphi B \pi \big] \d t + \varphi \sum_{i=1}^d (C_i X + D_i \pi) \d W_i\\
+    &= \bigg[\dot{\varphi} X + \dot{\psi} + \varphi A X + \varphi B \vartheta_2 X + \varphi B \kappa_2\bigg] \d t + \sum_{i=1}^d \varphi (C_i X + D_i \vartheta_2 X + D_i \kappa_2) \d W_i \numberthis \label{eq: bsde_primal_ito}
+\end{align*}
+Equating the coefficients of \eqref{eq: bsde_primal_ito} with \eqref{eq: fbsde_primal}, we get the system
+\begin{align}
+    &\dot{\varphi} X + \dot{\psi} + \varphi A X + \varphi B \vartheta_2 X + \varphi B \kappa_2 = - D_x[\mathcal{H}(t, X(t), \pi(t), p(t), q(t))] \label{eq: system_1}\\
+    %-A^T \varphi X - A^T\psi - \sum_{i=1}^d C_i^T q_i + Q X + S^T \vartheta_2 X + S^T \kappa_2\\
+    &\varphi (C_i X + D_i \vartheta_2 X + D_i \kappa_2) = q_i \quad i \in \{1, \dots, d \}\\
+    &B^T \varphi X + B^T \psi + \sum_{i=1}^d D_i^T q_i - S X - R(\vartheta_1 X + \kappa_1) = 0, \label{eq: system_2}
+\end{align}
+where the third equation is the Hamiltonian condition \eqref{eq: hamiltonian_condition_primal}. We now substitute $q_i$ from the second equation into \eqref{eq: hamiltonian_derivative_primal} and \eqref{eq: system_2}, so that our system becomes
+\begin{align*}
+    \dot{\varphi}(t) X(t) + \dot{\psi}(t) + \varphi(t) A X(t) + \varphi B \vartheta_2 X + \varphi B \kappa_2
+    = -A^T \varphi X - A^T \psi - \vartheta_2^T B^T \varphi X - \vartheta_2^T B^T \psi\\ 
+    - \sum_{i=1}^d C_i^T \varphi (C_i X + D_i \vartheta_2 X + D_i \kappa_2) - \sum_{i=1}^d \vartheta_2^T D_i^T \varphi (C_i X + D_i \vartheta_2 X + D_i \kappa_2)\\
+    + QX + 2S^T\vartheta_2 X + S^T \kappa_2 + \vartheta_2^T R \vartheta_2 X + \vartheta_2^T R \kappa_2 \numberthis \label{eq: equal_coeff_primal}\\
+    B^T \varphi X + B^T \psi + \sum_{i=1}^d D_i^T \big[\varphi (C_i X + D_i \vartheta_2 X + D_i \kappa_2) \big] - S X - R\vartheta_2 x - R \kappa_2 = 0 \numberthis \label{eq: system_3}
+\end{align*}
+From \eqref{eq: system_3}, we get 
+\begin{equation}
+    \pi^\ast = \vartheta_2 X + \kappa_2 = \bigg[ \sum_{i=1}^d D_i^T \varphi D_i -  R \bigg]^{-1} \bigg[ S X - B^T \varphi X - B^T \psi - \sum_{i=1}^d D_i^T \varphi C_i X \bigg], \label{eq: primal_bsde_optimal_control}
+\end{equation}
+i.e., 
+\begin{equation}
+    \vartheta_2 = \bigg[ \sum_{i=1}^d D_i^T \varphi D_i - 2 R \bigg]^{-1} \bigg[ S - B^T \varphi - \sum_{i=1}^d D_i^T \varphi C_i \bigg], \quad \kappa_2 = -  \bigg[ \sum_{i=1}^d D_i^T \varphi D_i - 2 R \bigg]^{-1} B^T \psi.\label{eq: control_parameters_primal}
+\end{equation}
+We rewrite equation \eqref{eq: equal_coeff_primal} as
+\begin{align*}
+    \bigg[\dot{\varphi} + \varphi A + A^T \varphi + \varphi B \vartheta_2 + \vartheta_2^T B^T \varphi + \sum_{i=1}^d (C_i^T + \vartheta_2^T D_i^T) \varphi (C_i + D_i \vartheta_2) - Q - S^T \vartheta_2 - \vartheta_2^T S - \vartheta_2^T R \vartheta_2\bigg]X  \\
+    + \big[ \dot{\psi} + \varphi B \kappa_2 + A^T \psi + \vartheta_2^T B^T \psi + \sum_{i=1}^d C_i^T \varphi D_i \kappa_2 + \sum_{i=1}^d \vartheta_2^T D_i^T \varphi D_i \kappa_2 - S^T \kappa_2 - \vartheta_2^T R \kappa_2 \big]= 0
+\end{align*}
+Since this must be true for all $X$, the coefficient in front of $X$ must be equal to zero, so we get the system of ODEs
+\begin{align}
+    &\dot{\varphi} + \varphi A + A^T \varphi + \varphi B \vartheta_2 + \vartheta_2^T B^T \varphi + \sum_{i=1}^d (C_i^T + \vartheta_2^T D_i^T) \varphi (C_i + D_i \vartheta_2) - Q - S^T \vartheta_2 - \vartheta_2^T S - \vartheta_2^T R \vartheta_2  = 0  \label{eq: primal_bsde_solution_1}\\
+    &\dot{\psi} + \varphi B \kappa_2 + A^T \psi + \vartheta_2^T B^T \psi + \sum_{i=1}^d C_i^T \varphi D_i \kappa_2 + \sum_{i=1}^d \vartheta_2^T D_i^T \varphi D_i \kappa_2 - S^T \kappa_2 - \vartheta_2^T R \kappa_2 = 0, \label{eq: primal_bsde_solution_2}
+\end{align}
+where $\vartheta_2$ and $\kappa_2$ are as in \eqref{eq: control_parameters_primal} and the terminal conditions are given by
+\begin{equation}
+    \varphi(T) = - G(T), \quad \psi(T) = - L(T). \label{eq: primal_bsde_terminal_conds}
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%   EQUIVALENCE HJB AND BSDE %%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\subsubsection{Equivalence of Primal HJB and Primal BSDE}
+From the Primal HJB, the optimal control is given by \eqref{eq: primal_hjb_optimal_control}:
+\begin{equation}
+    \pi^\ast = \bigg[\sum_{i=1}^d D_i^T P D_i - R\bigg]^{-1} \bigg[S x - B^T P x - B^T M - \sum_{i=1}^d D_i^T P C_i x\bigg]
+\end{equation}
+and from the Primal BSDE the optimal control is \eqref{eq: primal_bsde_optimal_control}:
+\begin{equation}
+    \pi^\ast = \bigg[ \sum_{i=1}^d D_i^T \varphi D_i -  R \bigg]^{-1} \bigg[ S X - B^T \varphi X - B^T \psi - \sum_{i=1}^d D_i^T \varphi C_i X \bigg],
+\end{equation}
+Comparing, we see that the equations are identical and we get the relation
+\begin{equation*}
+    \varphi = P, \quad \psi = M. 
+\end{equation*}
+The ODE from the Primal BSDE for $\varphi$ is \eqref{eq: primal_bsde_solution_1}. Substituting $\varphi = P$ and $\vartheta_2 = \vartheta_1$ we get 
+\begin{equation*}
+    \dot{P} + P A + A^T P + P B \vartheta_1 + \vartheta_1^T B^T P + \sum_{i=1}^d (C_i^T + \vartheta_1^T D_i^T) P (C_i + D_i \vartheta_1) - Q - 2S^T \vartheta_1 - \vartheta_1^T R \vartheta_1  = 0,
+\end{equation*}
+which is equal to twice the ODE for $P$ from the primal HJB \eqref{eq: primal_hjb_ricatti_1}, i.e. 
+\begin{align*}
+    \frac12 \bigg[ \dot{P} + P A + A^T P + P B \vartheta_1 + \vartheta_1^T B^T P + \sum_{i=1}^d (C_i^T + \vartheta_1^T D_i^T) P (C_i + D_i \vartheta_1) - Q - 2S^T \vartheta_1 - \vartheta_1^T R \vartheta_1\bigg] = 0.
+\end{align*}
+Similarly, substituting $\varphi=P, \psi = M$, $\vartheta_2 = \vartheta_1$ and $\kappa_2 = \kappa_1$ into \eqref{eq: primal_bsde_solution_2} we get
+\begin{align*}
+    \dot{M} + P B \kappa_1 + A^T M + \vartheta_1^T B^T M + \sum_{i=1}^d C_i^T P D_i \kappa_1 + \sum_{i=1}^d \vartheta_1^T D_i^T P D_i \kappa_1 - S^T \kappa_1 - \vartheta_1^T R \kappa_1 = 0
+\end{align*}
+which is the same equation as \eqref{eq: primal_hjb_ricatti_2}:
+\begin{align*}
+    \dot{M} + A^T M + P B \kappa_1 + \vartheta_1^T B^T M + \sum_{i=1}^d (C_i^T + \vartheta_1^T D_i^T&)P D_i \kappa_1 -  S^T \kappa_1 - \vartheta_1^T R \kappa_1 = 0 
+\end{align*}
+The terminal conditions for the primal BSDE are given by \eqref{eq: primal_bsde_terminal_conds}:
+\begin{equation*}
+    \varphi(T) = - G(T), \quad \psi(T) = - L(T),
+\end{equation*}
+and from the primal HJB \eqref{eq: primal_hjb_terminal_conds}:
+\begin{equation*}
+    P(T) = -G(T), \quad M(T) = - L(T), \quad N(T) = 0. 
+\end{equation*}
+So the ODEs for solving $P, M$ and $\varphi, \psi$ are identical, hence we have equivalence between the two methods.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%   DUAL PROBLEM %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\newpage
+
+\section{Solving the Dual Problem}
+
+
+\subsection{HJB Method}\label{Dual HJB Equation}
+\subsubsection{The Dual HJB}
+Recall that the dual process $Y$ satisfies \eqref{eq: y_sde}:
+\begin{equation*}
+    \begin{cases}
+        \d Y(t) &= \big[ \alpha(t) - A(t)^T Y(t) - \sum_{i=1}^d C_i(t)^T \beta_i(t)\big]\d t + \sum_{i=1}^d \beta_i(t) \d W_i(t)\\
+        Y(t_0) &= y
+    \end{cases}
+\end{equation*}
+and also recall from \eqref{eq: dual_value_function} that the dual value function is given by
+\begin{equation*}
+    \tilde{v}(t, Y(t)) = \sup_{\alpha, \beta_1, \dots, \beta_d} \E \bigg[ - \int_{t_0}^T \phi(t, \alpha, \beta) \d t - h(Y(T)) \bigg],
+\end{equation*}
+where $\beta = B^T Y + \sum_{i=1}^d D_i^T \beta_i$ and $\phi(t,\alpha, \beta)$ and $h(Y(T))$ are given in \eqref{eq: phi} and \eqref{eq: h}. Then, following the same steps as for the primal problem, the dual HJB equation is given by
+\begin{equation*}
+    \frac{\partial \tilde{v}}{\partial t} (t, y) + \sup_{\alpha, \beta_1, \dots, \beta_d} \big[\mathcal{L}^{\alpha, \beta_i}[\tilde{v}(t,y)] - \phi(t, \alpha, \beta) \big] = 0, %\label{dual_hjb}
+\end{equation*}
+where the generator is given by
+\begin{equation*}
+    \mathcal{L}^{\alpha, \beta_i}[\tilde{v}(t, y)] = \bigg(\alpha^T - y^T A - \sum_{i=1}^d \beta_i^T C_i\bigg)D_y[\tilde{v}] + \frac12 \sum_{i=1}^d \beta_i^T D_y^2[\tilde{v}] \beta_i,
+\end{equation*}
+and the terminal condition is
+\begin{equation*}
+    \tilde{v}(T,y) = - h(y) = - \frac12 (y^T + L^T) G^{-1} (y+ L).
+\end{equation*}
+\subsubsection{Finding the Optimal Controls}
+To find the supremum, we set the derivatives with respect to $\alpha, \beta_1, \dots, \beta_d$ to zero. We have
+\begin{align}
+    &D_\alpha \big[\mathcal{L}^{\alpha, \beta_i}[\tilde{v}(t,y)] - \phi\big] = D_y[\tilde{v}] - \tilde{Q}\alpha - \tilde{S}^T \bigg(B^T y + \sum_{i=1}^d D_i^T \beta_i\bigg) = 0 \label{eq: dual_sys1}\\
+    &D_{\beta_i}\big[\mathcal{L}^{\alpha, \beta_i}[\tilde{v}(t,y)] - \phi\big] = - C_i D_y[\tilde{v}] + D_y^2[\tilde{v}] \beta_i
+    - D_i \bigg(\tilde{S}\alpha + \tilde{R}\bigg(B^T y + \sum_{i=1}^d D_i^T \beta_i\bigg)\bigg) = 0 \label{eq: dual_sys2}
+\end{align}
+This is a system of $d+1$ equations in $d+1$ unknowns, so it can be solved and the optimal controls are linear functions of $y$,  which we denote by $\alpha^\ast$ and $\beta_i^\ast$.
+%From the first equation, we get 
+%\begin{equation*}
+%    \beta = \tilde{S}^\dagger (D_y[\tilde{v}] - \tilde{Q} \alpha),
+%\end{equation*}
+%where $\tilde{S}^\dagger = (\tilde{S}\tilde{S}^T)^{-1} \tilde{S}$ is the Moore-Penrose inverse of $\tilde{S}^T$. From the second equation, we get
+%\begin{align*}
+%    \beta_i = (D_y^2[\tilde{v}])^{-1} \bigg[ (C_i + D_i \tilde{R}\tilde{S}^\dagger) D_y[\tilde{v}] + (D_i \tilde{S} - D_i \tilde{R}\tilde{S}^\dagger \tilde{Q})\alpha \bigg]
+%\end{align*}
+%Substituting into the first equation
+%\begin{align*}
+%    \tilde{Q} \alpha 
+%    &= D_y[\tilde{v}] - \tilde{S}^T \beta\\
+%    &= D_y[\tilde{v}] - \tilde{S}^T B^T Y - \tilde{S}^T \sum_{i=1}^d D_i^T \beta_i\\
+%    &= D_y[\tilde{v}] - \tilde{S}^T B^T Y - \tilde{S}^T \sum_{i=1}^d D_i^T (D_y^2[\tilde{v}])^{-1} \bigg[ (C_i + D_i \tilde{R}\tilde{S}^\dagger) D_y[\tilde{v}] + (D_i \tilde{S} - D_i \tilde{R}\tilde{S}^\dagger \tilde{Q})\alpha \bigg]
+%\end{align*}
+%Rearranging we get
+%\begin{equation}
+%    \bigg(\tilde{Q} + \tilde{S}^T \sum_{i=1}^d D_i^T (D_y^2[\tilde{v}])^{-1} (D_i \tilde{S} - D_i\tilde{R}\tilde{S}^\dagger \tilde{Q}) \bigg)\alpha = D_y[\tilde{v}] - \tilde{S}^T B^T Y -\tilde{S}^T \sum_{i=1}^d D_i^T (D_y^2[\tilde{v}])^{-1} \big(D_i \tilde{R}\tilde{S}^\dagger + C_i\big) D_y[\tilde{v}] 
+%\end{equation}
+%so
+%\begin{equation}
+%    \alpha^\ast = \bigg[\tilde{Q} + \tilde{S}^T \sum_{i=1}^d D_i^T (D_y^2[\tilde{v}])^{-1} (D_i \tilde{S} - D_i\tilde{R}\tilde{S}^\dagger \tilde{Q}) \bigg]^{-1} \bigg[D_y[\tilde{v}] - \tilde{S}^T B^T Y -\tilde{S}^T \sum_{i=1}^d D_i^T (D_y^2[\tilde{v}])^{-1} \big(D_i \tilde{R}\tilde{S}^\dagger + C_i\big) D_y[\tilde{v}]  \bigg] \label{eq: dual_alpha1}
+%\end{equation}
+%and the optimal $\beta_i$ are
+%\begin{equation}
+%    \beta_i^\ast = (D_y^2[\tilde{v}])^{-1} \bigg[ (C_i + D_i \tilde{R}\tilde{S}^\dagger) D_y[\tilde{v}] + (D_i \tilde{S} - D_i \tilde{R}\tilde{S}^\dagger \tilde{Q})\alpha^\ast \bigg] \label{eq: dual_beta1}
+%\end{equation}
+The HJB equation then becomes
+\begin{equation}
+    \frac{\partial \tilde{v}}{\partial t} + \bigg({\alpha^\ast}^T - Y^T A - \sum_{i=1}^d {\beta_i^\ast}^T C_i\bigg)D_y[\tilde{v}] + \frac12 \sum_{i=1}^d {\beta_i^\ast}^T D_y^2[\tilde{v}] {\beta_i^\ast} - \phi\bigg(t, \alpha^\ast, B^T y + \sum_{i=1}^d D_i^T \beta_i^\ast \bigg) = 0 \label{eq: dual_hjb}
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%% SOLVING DUAL HJB%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsubsection{Solving the Dual HJB}
+Suppose that $\tilde{v}$ is a quadratic function in $y$ and use the ansatz
+\begin{equation}
+    \tilde{v}(t,y) = \frac12 y^T \tilde{P}(t) y + y^T \tilde{M}(t) + \tilde{N}(t),
+\end{equation}
+with terminal conditions
+\begin{equation}
+    \tilde{P}(T) = -G^{-1}(T), \quad \tilde{M}(T) = - G^{-1}(T)L(T), \quad \tilde{N}(T) = -\frac12 L^T(T)G^{-1}(T)L(T). \label{eq: dual_terminal_conditions}
+\end{equation}
+Then
+\begin{align*}
+    &\frac{\partial \tilde{v}}{\partial t}(t, y) = \frac12 y^T \frac{\d \tilde{P}}{\d t}(t) y + y^T \dot{\tilde{M}}(t) + \dot{\tilde{N}}(t)\\
+    &D_y[\tilde{v(t,y)}] = \tilde{P}(t) y + \tilde{M}(t)\\
+    &D_y^2[\tilde{v(t,y)}] = \tilde{P}(t)
+\end{align*}
+%Substituting this into the controls \eqref{eq: dual_alpha1} and \eqref{eq: dual_beta1}, we get
+%\begin{align}
+%    &\alpha^\ast = \bigg[\tilde{Q} + \tilde{S}^T \sum_{i=1}^d D_i^T \tilde{P}^{-1} (D_i \tilde{S} - D_i\tilde{R}\tilde{S}^\dagger \tilde{Q}) \bigg]^{-1} \bigg[\tilde{P}y+b - \tilde{S}^T B^T Y -\tilde{S}^T \sum_{i=1}^d D_i^T \tilde{P}^{-1} \big(D_i \tilde{R}\tilde{S}^\dagger + C_i\big) (\tilde{P}y+b)\bigg]\\
+%    &\beta_i^\ast = \tilde{P}^{-1} \bigg[ (C_i + D_i \tilde{R}\tilde{S}^\dagger) (\tilde{P}y+b)+ (D_i \tilde{S} - D_i \tilde{R}\tilde{S}^\dagger \tilde{Q})\alpha^\ast \bigg]
+%\end{align}
+The system of equations \eqref{eq: dual_sys1} and \eqref{eq: dual_sys2} from which we derive the optimal controls $\alpha^\ast$ and $\beta_i^\ast$ is now given by 
+\begin{equation}
+\begin{cases}
+    &\tilde{P}y + \tilde{M} - \tilde{Q}\alpha - \tilde{S}^T \bigg(B^T y + \sum_{i=1}^d D_i^T \beta_i\bigg) = 0\\
+    &C_i (\tilde{P}y + \tilde{M}) - \tilde{P} \beta_i
+    + D_i \bigg(\tilde{S}\alpha + \tilde{R}\bigg(B^T y + \sum_{i=1}^d D_i^T \beta_i\bigg)\bigg) = 0
+\end{cases} \label{eq: dual_hjb_system_controls}
+\end{equation}
+We do not solve this system explicitly, however, the solutions for $\alpha^\ast$ and $\beta_i^\ast$ are linear in $y$, hence we simply denote by $\tilde{\vartheta}$ and $\tilde{\kappa}$ the coefficients before $y$ and the free coefficient in $\alpha^\ast$ and similarly for $\beta_i$, i.e. 
+\begin{equation}
+    \alpha^\ast = \tilde{\vartheta} y + \tilde{\kappa}, \quad \beta_i = \tilde{\vartheta}_i y + \tilde{\kappa}_i. \label{eq: dual_coeffs}
+\end{equation}
+Substituting this into the HJB equation \eqref{eq: dual_hjb} we get 
+\begin{align*}
+     \frac12 y^T \frac{\d \tilde{P}}{\d t} y + y^T \frac{\tilde{M}}{\d t} + \frac{\tilde{N}}{\d t} + \bigg(y^T \tilde{\vartheta}^T + \tilde{\kappa}^T - y^T A - \sum_{i=1}^d (y^T \tilde{\vartheta}_i^T + \tilde{\kappa}_i^T) C_i\bigg)(\tilde{P}y+\tilde{M})\\
+     + \frac12 \sum_{i=1}^d (y^T\tilde{\vartheta}_i^T + \tilde{\kappa}_i^T) \tilde{P} (\tilde{\vartheta}_i y + \tilde{\kappa}_i) - \phi\bigg(t, \tilde{\vartheta} y + \tilde{\kappa}, B^T y + \sum_{i=1}^d D_i^T (\tilde{\vartheta}_i y + \tilde{\kappa}_i) \bigg) = 0
+\end{align*}
+Expanding $\phi\bigg(t, \tilde{\vartheta} y + \tilde{\kappa}, B^T y + \sum_{i=1}^d D_i^T (\tilde{\vartheta}_i y + \tilde{\kappa}_i) \bigg) $ we get
+\begin{align*}
+    \phi(t, \alpha^\ast, \beta^\ast)
+    = \frac12 (\tilde{\vartheta} y + \tilde{\kappa})^T \tilde{Q}(\tilde{\vartheta} y + \tilde{\kappa})+ (\tilde{\vartheta} y + \tilde{\kappa})^T \tilde{S}^T \big(B^T y + \sum_{i=1}^d D_i^T (\tilde{\vartheta}_i y + \tilde{\kappa}_i)\big)\\
+    + \frac12\big(B^T y + \sum_{i=1}^d D_i^T (\tilde{\vartheta}_i y + \tilde{\kappa}_i)\big)^T \tilde{R}(B^T y + \sum_{i=1}^d D_i^T (\tilde{\vartheta}_i y + \tilde{\kappa}_i))
+\end{align*}
+Rearranging, we get 
+\begin{align*}
+     \frac12 y^T \frac{\d \tilde{P}}{\d t} y + y^T \frac{\d \tilde{M}}{\d t} + \frac{\d \tilde{N}}{\d t} + y^T\tilde{\vartheta}^T \tilde{P} y + y^T \tilde{P} \tilde{\kappa} - y^T A \tilde{P} y - y^T \sum_{i=1}^d \tilde{\vartheta}_i^T C_i \tilde{P} y - y^T \tilde{P} \sum_{i=1}^d C_i^T \tilde{\kappa}_i\\
+     + y^T \tilde{\vartheta}^T \tilde{M}+ \tilde{\kappa}^T \tilde{M}- y^T A \tilde{M}- \sum_{i=1}^d y^T \tilde{\vartheta}_i^T C_i \tilde{M}- \sum_{i=1}^d \tilde{\kappa}_i^T C_i \tilde{M}+ \frac12 y^T \sum_{i=1}^d\tilde{\vartheta}_i^T \tilde{P} \tilde{\vartheta}_i y\\
+     + y^T \sum_{i=1}^d\tilde{\vartheta}_i \tilde{P} \tilde{\kappa}_i
+     + \frac12 \sum_{i=1}^d\tilde{\kappa}_i^T \tilde{P} \tilde{\kappa}_i
+     - \frac12 y^T \tilde{\vartheta}^T \tilde{Q}\tilde{\vartheta} y - y^T \tilde{\vartheta}^T \tilde{Q}\tilde{\kappa} - \frac12 \tilde{\kappa}^T \tilde{Q}\tilde{\kappa} - y^T \tilde{\vartheta}^T \tilde{S}^T (B^T + \sum_{i=1}^d D_i^T \tilde{\vartheta}_i)y\\
+     - y^T \tilde{\vartheta}^T \tilde{S}^T\sum_{i=1}^d D_i^T \tilde{\kappa}_i
+     - y^T(B + \sum_{i=1}^d \tilde{\vartheta}_i^T D_i)\tilde{S}\tilde{\kappa} - \tilde{\kappa}^T \tilde{S}^T \sum_{i=1}^d D_i^T \tilde{\kappa}_i\\
+     -\frac12 y^T\bigg(B + \sum_{i=1}^d\tilde{\vartheta}_i^T D_i\bigg) \tilde{R} \bigg(B^T + \sum_{i=1}^d D_i^T \tilde{\vartheta}_i\bigg)y
+     - y^T\bigg(B + \sum_{i=1}^d\tilde{\vartheta}_i^T D_i\bigg) \tilde{R} \sum_{i=1}^d D_i^T \tilde{\kappa}_i\\
+     - \frac12 \bigg(\sum_{i=1}^d\tilde{\kappa}_i^T D_i\bigg) \tilde{R} \bigg(\sum_{i=1}^d D_i^T \tilde{\kappa}_i\bigg) = 0
+\end{align*}
+Grouping together the coefficients in front of $y$ we get:
+\begin{align*}
+    y^T \bigg[ \frac12 \frac{\d \tilde{P}}{\d t} + \tilde{\vartheta}^T \tilde{P} - A \tilde{P}  - \sum_{i=1}^d \tilde{\vartheta}_i^T C_i \tilde{P} + \frac12 \sum_{i=1}^d \tilde{\vartheta}_i^T \tilde{P} \tilde{\vartheta}_i - \frac12 \tilde{\vartheta}^T \tilde{Q}\tilde{\vartheta} - \tilde{\vartheta}^T \tilde{S}^T \bigg(B^T + \sum_{i=1}^d D_i^T \tilde{\vartheta}_i \bigg)\\
+    - \frac12 \bigg(B + \sum_{i=1}^d\tilde{\vartheta}_i^T D_i\bigg) \tilde{R} \bigg(B^T + \sum_{i=1}^d D_i^T \tilde{\vartheta}_i\bigg) \bigg]y\\
+    + y^T \bigg[ \frac{\d \tilde{M}}{\d t} + \tilde{P} \tilde{\kappa} - \tilde{P} \sum_{i=1}^d C_i^T \tilde{\kappa}_i + \tilde{\vartheta}^T \tilde{M} - A\tilde{M} - \sum_{i=1}^d \tilde{\vartheta}_i^T C_i \tilde{M}
+    + \sum_{i=1}^d\tilde{\vartheta}_i \tilde{P} \tilde{\kappa}_i - \tilde{\vartheta}^T \tilde{Q} \tilde{\kappa}
+    - \tilde{\vartheta}^T \tilde{S}^T \sum_{i=1}^d D_i^T \tilde{\kappa}_i\\
+    - \big(B + \sum_{i=1}^d\tilde{\vartheta}_i^T D_i \big)\tilde{S}\tilde{\kappa} - \big( B + \sum_{i=1}^d \tilde{\vartheta}_i^T D_i \big) \tilde{R} \sum_{i=1}^dD_i^T \tilde{\kappa}_i  \bigg]\\
+    + \frac{\d \tilde{N}}{\d t} + \tilde{\kappa}^T \tilde{M} - \sum_{i=1}^d\tilde{\kappa}_i^T C_i \tilde{M} + \frac12 \sum_{i=1}^d\tilde{\kappa}_i^T \tilde{P} \tilde{\kappa}_i - \frac12 \tilde{\kappa}^T \tilde{Q}\tilde{\kappa} - \tilde{\kappa}^T \tilde{S}^T \sum_{i=1}^d D_i^T\tilde{\kappa}_i\\
+    - \frac12 \bigg(\sum_{i=1}^d\tilde{\kappa}_i^T D_i\bigg) \tilde{R} \bigg(\sum_{i=1}^d D_i^T \tilde{\kappa}_i\bigg) = 0
+\end{align*}
+This equation must equal zero for all $y$, hence the coefficients in front of the quadratic term, as well as $y^T$ and the free coefficient must be zero. Setting the coefficients to zero, we get the system
+\begin{align*}
+    \frac12 \frac{\d \tilde{P}}{\d t} + \tilde{\vartheta}^T \tilde{P} - A \tilde{P}  - \sum_{i=1}^d \tilde{\vartheta}_i^T C_i \tilde{P} + \frac12 \sum_{i=1}^d \tilde{\vartheta}_i^T \tilde{P} \tilde{\vartheta}_i - \frac12 \tilde{\vartheta}^T \tilde{Q}\tilde{\vartheta} - \tilde{\vartheta}^T \tilde{S}^T \big(B^T + \sum_{i=1}^d D_i^T \tilde{\vartheta}_i \big)\\
+    - \frac12 \bigg(B + \sum_{i=1}^d\tilde{\vartheta}_i^T D_i\bigg) \tilde{R} \bigg(B^T + \sum_{i=1}^d D_i^T \tilde{\vartheta}_i\bigg) = 0 \numberthis \label{eq: dual_hjb_sol1}\\
+    \frac{\d \tilde{M}}{\d t} + \tilde{P} \tilde{\kappa} - \tilde{P} \sum_{i=1}^d C_i^T \tilde{\kappa}_i + \tilde{\vartheta}^T \tilde{M} - A\tilde{M} - \sum_{i=1}^d \tilde{\vartheta}_i^T C_i \tilde{M} 
+    + \sum_{i=1}^d\tilde{\vartheta}_i \tilde{P} \tilde{\kappa}_i - \tilde{\vartheta}^T \tilde{Q} \tilde{\kappa} - \tilde{\vartheta}^T \tilde{S}^T \sum_{i=1}^d D_i^T \tilde{\kappa}_i\\
+    - \big(B + \sum_{i=1}^d\tilde{\vartheta}_i^T D_i \big)\tilde{S}\tilde{\kappa} - \big( B + \sum_{i=1}^d \tilde{\vartheta}_i^T D_i \big) \tilde{R} \sum_{i=1}^dD_i^T \tilde{\kappa}_i = 0 \numberthis \label{eq: dual_hjb_sol2}\\
+    \frac{\d \tilde{N}}{\d t} + \tilde{\kappa}^T \tilde{M} - \sum_{i=1}^d\tilde{\kappa}_i^T C_i \tilde{M} + \frac12 \sum_{i=1}^d\tilde{\kappa}_i^T \tilde{P} \tilde{\kappa}_i - \frac12 \tilde{\kappa}^T \tilde{Q}\tilde{\kappa} - \tilde{\kappa}^T \tilde{S}^T \sum_{i=1}^d D_i^T\tilde{\kappa}_i\\
+    - \frac12 \bigg(\sum_{i=1}^d\tilde{\kappa}_i^T D_i\bigg) \tilde{R} \bigg(\sum_{i=1}^d D_i^T \tilde{\kappa}_i\bigg) = 0 \numberthis \label{eq: dual_hjb_sol3}
+\end{align*}
+where $\tilde{\vartheta}, \tilde{\kappa}, \tilde{\vartheta}_i$ and $\tilde{\kappa}_i$ satisfy the system \eqref{eq: dual_hjb_system_controls}:
+\begin{equation}
+\begin{cases}
+    &\tilde{P}y + \tilde{M} - \tilde{Q}(\tilde{\vartheta}y + \kappa) - \tilde{S}^T \bigg(B^T y + \sum_{i=1}^d D_i^T (\tilde{\vartheta}_i y + \kappa_i)\bigg) = 0\\
+    &C_i (\tilde{P}y + \tilde{M}) - \tilde{P} (\tilde{\vartheta}_i y + \kappa_i)
+    + D_i \bigg(\tilde{S}(\tilde{\vartheta}y + \kappa) + \tilde{R}\bigg(B^T y + \sum_{i=1}^d D_i^T (\tilde{\vartheta}_i y + \kappa_i)\bigg)\bigg) = 0
+\end{cases} \label{eq: dual_hjb_system_controls_2}
+\end{equation}
+and the terminal conditions are given by:
+\begin{equation}
+    \tilde{P}(T) = -G^{-1}(T), \quad \tilde{M}(T) = - G^{-1}(T)L(T), \quad \tilde{N}(T) = - \frac12 L^T(T)G^{-1}(T)L(T). \label{eq: dual_hjb_terminal_conditions}
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%% DUAL BSDE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%55
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newpage 
+
+\subsection{BSDE Method}
+\subsubsection{Solution via the Dual BSDE}
+The Hamiltonian $\tilde{\mathcal{H}}: [t_0, T] \times \R^n \times \R^{nd} \times \R^n \times \R^{n \times d} \to \R$ for the dual problem is defined as
+\begin{align*}
+    \tilde{\mathcal{H}}(t, Y, \alpha, \beta_1, \dots, \beta_d, p, q) 
+    &= -\phi \bigg(t, \alpha, B^T Y + \sum_{i=1}^d D_i^T \beta_i \bigg) + p^T(\alpha - A^T Y - \sum_{i=1}^d C_i^T \beta_i) + \sum_{i=1}^d \beta_i^T q_i \\
+    &= p^T\alpha - p^T A^T Y - p^T\sum_{i=1}^d C_i^T\beta_i   + \sum_{i=1}^d \beta_i^T q_i - \phi \bigg(t, \alpha, B^T Y + \sum_{i=1}^d D_i^T \beta_i \bigg) \numberthis \label{eq: dual_hamiltonian}
+\end{align*}
+The adjoin equation is given by the system
+\begin{equation}
+    \begin{cases}
+        \d p(t) &= -D_y [\tilde{\mathcal{H}}] \d t + \sum_{i=1}^d q_i \d W_i  \\
+        p(T) &= - D_y[h(Y(T))]= - G^{-1} Y(T) - G^{-1} L
+    \end{cases} \label{eq: fbsde_dual}
+\end{equation}
+Due to the Stochastic Maximum Principle, the optimal control can be found by setting $D_\alpha [\tilde{\mathcal{H}}] = 0$ and $D_{\beta_i} [\tilde{\mathcal{H}}] = 0$ for all $i = 1,\dots, d$, so we get the system
+\begin{align}
+    &D_\alpha[\tilde{\mathcal{H}}] = p - \tilde{Q}\alpha - \tilde{S}^T \bigg(B^T Y + \sum_{i=1}D_i^T \beta_i \bigg) = 0  \label{eq: dual_hamiltonian_condition1}\\
+    &D_{\beta_i}[\tilde{\mathcal{H}}] = q_i - C_i p - D_i \tilde{S}\alpha - D_i \tilde{R}\bigg(B^T Y + \sum_{i=1}D_i^T \beta_i \bigg) = 0 \label{eq: dual_hamiltonian_condition2}
+\end{align}
+There are $d+1$ equations in $d+1$ unknowns, so the system can be solved and the optimal controls are linear functions of $Y$, which we denote by
+\begin{align*}
+    \alpha = \tilde{\vartheta} Y + \tilde{\kappa}, \quad \beta_i = \tilde{\vartheta}_i Y + \tilde{\kappa}_i, \quad i \in \{1,\dots,d\}
+\end{align*}
+Substituting into the Hamiltonian \eqref{eq: dual_hamiltonian} we get
+\begin{align*}
+    \tilde{\mathcal{H}} = p^T(\tilde{\vartheta} Y + \tilde{\kappa}) - p^T A^T Y - p^T\sum_{i=1}^d C_i^T(\tilde{\vartheta}_i Y + \tilde{\kappa}_i)   + \sum_{i=1}^d (Y^T \tilde{\vartheta}_i^T + \tilde{\kappa}_i^T) q_i\\
+    - \phi \bigg(t, \tilde{\vartheta} Y + \tilde{\kappa}, B^T Y + \sum_{i=1}^d D_i^T(\tilde{\vartheta}_i Y + \tilde{\kappa}_i)\bigg)
+\end{align*}
+The derivative of the dual Hamiltonian is then
+\begin{align*}
+    D_y[\tilde{\mathcal{H}}] = \tilde{\vartheta}^T p - A p - \sum_{i=1}^d \tilde{\vartheta}_i^T C_i p  + \sum_{i=1}^d \tilde{\vartheta}_i^T q_i - \tilde{\vartheta}^T \tilde{Q}\tilde{\vartheta} Y- \tilde{\vartheta}^T \tilde{Q} \tilde{\kappa}\\
+    - 2 \tilde{\vartheta}^T \tilde{S}\bigg(B^T + \sum_{i=1}^d D_i^T \tilde{\vartheta}_i\bigg) Y
+    - \tilde{\vartheta}^T \tilde{S}^T \sum_{i=1}^d D_i^T \tilde{\kappa}_i - \bigg( B + \sum_{i=1}^d \tilde{\vartheta}_i^T D_i \bigg) \tilde{S} \tilde{\kappa}\\
+    - \bigg(B + \sum_{i=1}^d \tilde{\vartheta}_i^T D_i \bigg) \tilde{R} \bigg(B^T + \sum_{i=1}^d D_i^T \tilde{\vartheta}_i\bigg) Y
+    - \bigg(B^T + \sum_{i=1}^d D_i^T \tilde{\vartheta}_i\bigg) \tilde{R}\sum_{i=1}^d D_i^T \tilde{\kappa}_i \numberthis \label{eq: dual_derivative_hamiltonian}
+\end{align*}
+We try the ansatz
+\begin{equation*}
+    p = \tilde{\varphi}(t) Y + \tilde{\psi}(t),
+\end{equation*}
+where $\varphi(t) \in \R^{n \times n}$ and $\psi(t) \in R^n$. Applying Ito's formula to $p$, we get
+\begin{align*}
+    \d p &= \bigg(\frac{\d \tilde{\varphi}}{\d t} Y + \frac{\d \tilde{\psi}}{\d t}\bigg)\d t + \tilde{\varphi} \d Y\\
+    &= \bigg(\frac{\d \tilde{\varphi}}{\d t} Y + \frac{\d \tilde{\psi}}{\d t}\bigg)\d t + \tilde{\varphi} \big[ \alpha - A^T Y - \sum_{i=1}^d C_i^T \beta_i \big]\d t + \tilde{\varphi} \sum_{i=1}^d \beta_i \d W_i\\
+    &= \bigg[ \frac{\d \tilde{\varphi}}{\d t}Y + \frac{\d \tilde{\psi}}{\d t} + \tilde{\varphi} \alpha - \tilde{\varphi} A^T Y -\tilde{\varphi} \sum_{i=1}^d C_i^T \beta_i \bigg] \d t + \tilde{\varphi} \sum_{i=1}^d \beta_i \d W_i\\
+    &= \bigg[ \frac{\d \tilde{\varphi}}{\d t}Y + \frac{\d \tilde{\psi}}{\d t} + \tilde{\varphi} \tilde{\vartheta} Y + \tilde{\varphi} \tilde{\kappa} - \tilde{\varphi} A^T Y - \tilde{\varphi} \sum_{i=1}^d C_i^T \tilde{\vartheta}_i Y - \tilde{\varphi} \sum_{i=1}^d C_i^T \tilde{\kappa}_i \bigg] \d t + \tilde{\varphi} \sum_{i=1}^d (\tilde{\vartheta}_i Y + \tilde{\kappa}_i) \d W_i \numberthis 
+    \label{eq: dual_ito_p2}
+\end{align*}
+Equating the coefficients of \eqref{eq: dual_ito_p2} and \eqref{eq: fbsde_dual} we get 
+\begin{align}
+    &\frac{\d \tilde{\varphi}}{\d t}Y + \frac{\d \tilde{\psi}}{\d t} + \tilde{\varphi} \tilde{\vartheta} Y + \tilde{\varphi} \tilde{\kappa} - \tilde{\varphi} A^T Y - \tilde{\varphi} \sum_{i=1}^d C_i^T \tilde{\vartheta}_i Y - \tilde{\varphi} \sum_{i=1}^d C_i^T \tilde{\kappa}_i = -D_y[\tilde{\mathcal{H}}] \label{eq: dual_equal_coeff}\\
+    &\tilde{\varphi} \tilde{\vartheta}_i Y + \tilde{\varphi} \tilde{\kappa}_i = q_i \label{eq: dual_equal_coeff2}
+\end{align}
+where the RHS of \eqref{eq: dual_equal_coeff} is given by \eqref{eq: dual_derivative_hamiltonian}. We now substitute $q_i$ from equation \eqref{eq: dual_equal_coeff2} into the system \eqref{eq: dual_hamiltonian_condition1} and \eqref{eq: dual_hamiltonian_condition2} we get
+\begin{equation}
+\begin{cases}
+    &\tilde{\varphi} Y + \tilde{\psi} - \tilde{Q}(\tilde{\vartheta} Y + \tilde{\kappa}) - \tilde{S}^T \bigg(B^T Y + \sum_{i=1}^d D_i^T (\tilde{\vartheta}_i Y + \tilde{\kappa}_i)\bigg)= 0\\
+    &\tilde{\varphi}( \tilde{\vartheta}_i Y +  \tilde{\kappa}_i) - C_i (\tilde{\varphi} Y + \tilde{\psi}) - D_i \tilde{S}(\tilde{\vartheta} Y + \tilde{\kappa}) - D_i \tilde{R}\bigg(B^T Y + \sum_{i=1}^d D_i^T (\tilde{\vartheta}_iY + \tilde{\kappa}_i)\bigg) = 0  
+\end{cases} 
+\label{eq: dual_system_optimal_controls}
+\end{equation}
+which is the system we need to solve, to acquire the optimal controls $\alpha^\ast = \tilde{\vartheta}Y + \tilde{\kappa}$ and $\beta_i^\ast = \tilde{\vartheta}_i + \tilde{\kappa}_i$. Substituting $q_i$ into \eqref{eq: dual_equal_coeff} we get
+\begin{align*}
+    &\frac{\d \tilde{\varphi}}{\d t}Y + \frac{\d \tilde{\psi}}{\d t} + \tilde{\varphi} \tilde{\vartheta} Y + \tilde{\varphi} \tilde{\kappa} - \tilde{\varphi} A^T Y - \tilde{\varphi} \sum_{i=1}^d C_i^T \tilde{\vartheta}_i Y - \tilde{\varphi} \sum_{i=1}^d C_i^T \tilde{\kappa}_i = -\tilde{\vartheta}^T p + A p + \sum_{i=1}^d \tilde{\vartheta}_i^T C_i p\\
+    &+ \sum_{i=1}^d \tilde{\vartheta}_i^T (\tilde{\varphi} \tilde{\vartheta}_i Y + \tilde{\varphi} \tilde{\kappa}_i) + \tilde{\vartheta}^T \tilde{Q}\tilde{\vartheta} Y + \tilde{\vartheta}^T \tilde{Q} \tilde{\kappa} + 2 \tilde{\vartheta}^T \tilde{S}\bigg(B^T + \sum_{i=1}^d D_i^T \tilde{\vartheta}_i\bigg) Y + \tilde{\vartheta}^T \tilde{S}^T \sum_{i=1}^d D_i^T \tilde{\kappa}_i\\
+    &+ \bigg( B + \sum_{i=1}^d \tilde{\vartheta}_i^T D_i \bigg) \tilde{S} \tilde{\kappa}    + \bigg(B + \sum_{i=1}^d \tilde{\vartheta}_i^T D_i \bigg) \tilde{R} \bigg(B^T + \sum_{i=1}^d D_i^T \tilde{\vartheta}_i\bigg) Y + \bigg(B^T + \sum_{i=1}^d D_i^T \tilde{\vartheta}_i\bigg) \tilde{R}\sum_{i=1}^d D_i^T \tilde{\kappa}_i \numberthis \label{eq: dual1}
+\end{align*}
+%From \eqref{eq: dual2} we get 
+%\begin{equation*}
+%    \beta = \tilde{S}^\dagger (p - \tilde{Q} \alpha),
+%\end{equation*}
+%so, plugging it into \eqref{eq: dual3}
+%\begin{equation}
+%    \beta_i = \tilde{\varphi}^{-1}(C_i p + D_i \tilde{S}\alpha + D_i \tilde{R} \tilde{S}^\dagger p - D_i \tilde{R}\tilde{S}^\dagger \tilde{Q} \alpha) \label{eq: dual4}
+%\end{equation}
+%Equation \eqref{eq: dual2} is now equivalent to
+%\begin{align*}
+%    p &= \tilde{Q}\alpha + \tilde{S}^T B^T Y + \tilde{S}^T \sum_{i=1}^d D_i^T \beta_i \\
+%    &=\tilde{Q}\alpha + \tilde{S}^T B^T Y + \tilde{S}^T \sum_{i=1}^d D_i^T \tilde{\varphi}^{-1}(C_i p + D_i \tilde{S}\alpha + D_i \tilde{R} \tilde{S}^\dagger p - D_i \tilde{R}\tilde{S}^\dagger \tilde{Q} \alpha)
+%\end{align*}
+%Rewriting this and plugging in $p = \tilde{\varphi} Y + \tilde{\psi}$ we get 
+%\begin{equation}
+%    \alpha^\ast = \bigg[ \tilde{Q} +\tilde{S}^T \sum_{i=1}^d D_i^T \tilde{\varphi}^{-1}( D_i \tilde{S} - D_i \tilde{R}\tilde{S}^\dagger \tilde{Q}) \bigg]^{-1} \bigg[\tilde{\varphi} Y + \tilde{\psi} - \tilde{S}^TB^T Y - \tilde{S}^T \sum_{i=1}^d D_i^T \tilde{\varphi}^{-1}(C_i + D_i\tilde{R}\tilde{S}^\dagger)(\tilde{\varphi} Y + \tilde{\psi})  \bigg]
+%\end{equation}
+%Now using \eqref{eq: dual4} we get 
+%\begin{equation}
+%    \beta_i^\ast = \tilde{\varphi}^{-1}\big[ C_i \tilde{\varphi} Y + C_i \tilde{\psi} + D_i \tilde{S}\alpha + D_i \tilde{R} \tilde{S}^\dagger (\tilde{\varphi} Y + \tilde{\psi}) - D_i \tilde{R}\tilde{S}^\dagger \tilde{Q} \alpha^\ast \big]
+%\end{equation}
+We rewrite equation \eqref{eq: dual1} as
+\begin{align}
+    \bigg[ \frac{\d \tilde{\varphi}}{\d t} + \tilde{\varphi} \tilde{\vartheta} - \tilde{\varphi} A^T - \tilde{\varphi} \sum_{i=1}^d C_i^T \tilde{\vartheta}_i + \tilde{\vartheta}^T \tilde{\varphi} - A \tilde{\varphi} -\sum_{i=1}^d \tilde{\vartheta}_i C_i \tilde{\varphi} - \sum_{i=1}^d\tilde{\vartheta}_i^T\tilde{\varphi} \tilde{\vartheta}_i - \tilde{\vartheta}^T \tilde{Q}\tilde{\vartheta}\\
+    - 2\tilde{\vartheta}^T \tilde{S}(B^T + \sum_{i=1}^d D_i^T \tilde{\vartheta}_i) - (B + \sum_{i=1}^d\tilde{\vartheta}_i^T D_i)\tilde{R} (B^T + \sum_{i=1}^d D_i^T \tilde{\vartheta}_i)\bigg]Y\\
+    + \bigg[ \frac{\d \tilde{\psi}}{\d t} + \tilde{\varphi} \tilde{\kappa} - \tilde{\varphi} \sum_{i=1}^d C_i^T \tilde{\kappa}_i + \tilde{\vartheta}^T \tilde{\psi} - A \tilde{\psi} - \sum_{i=1}^d \tilde{\vartheta}_i^T C_i \tilde{\psi} - \sum_{i=1}^d \tilde{\vartheta}_i^T \tilde{\varphi} \tilde{\kappa}_i \\
+    -\tilde{\vartheta}^T \tilde{Q} \tilde{\kappa} - \tilde{\vartheta}^T \tilde{S}^T\sum_{i=1}^d D_i^T\tilde{\kappa}_i - (B + \sum_{i=1}^d\tilde{\vartheta}_i^T D_i) (\tilde{S}\tilde{\kappa} + \tilde{R} \sum_{i=1}^d D_i^T \tilde{\kappa}_i)\bigg] = 0
+\end{align}
+Since this must be true for all $Y$, the coefficient in front of $Y$ must be equal to zero, so we get
+\begin{align*}
+    \frac{\d \tilde{\varphi}}{\d t} + \tilde{\varphi} \tilde{\vartheta} - \tilde{\varphi} A^T - \tilde{\varphi} \sum_{i=1}^d C_i^T \tilde{\vartheta}_i + \tilde{\vartheta}^T \tilde{\varphi} - A \tilde{\varphi} -\sum_{i=1}^d \tilde{\vartheta}_i C_i \tilde{\varphi} - \sum_{i=1}^d\tilde{\vartheta}_i^T\tilde{\varphi} \tilde{\vartheta}_i - \tilde{\vartheta}^T \tilde{Q}\tilde{\vartheta}\\
+    - 2\tilde{\vartheta}^T \tilde{S}(B^T + \sum_{i=1}^d D_i^T \tilde{\vartheta}_i) - (B + \sum_{i=1}^d\tilde{\vartheta}_i^T D_i)\tilde{R} (B^T + \sum_{i=1}^d D_i^T \tilde{\vartheta}_i) = 0 \numberthis 
+    \label{eq: dual_bsde_sol1}\\
+    \frac{\d \tilde{\psi}}{\d t} + \tilde{\varphi} \tilde{\kappa} - \tilde{\varphi} \sum_{i=1}^d C_i^T \tilde{\kappa}_i + \tilde{\vartheta}^T \tilde{\psi} - A \tilde{\psi} - \sum_{i=1}^d \tilde{\vartheta}_i^T C_i \tilde{\psi} - \sum_{i=1}^d \tilde{\vartheta}_i^T \tilde{\varphi} \tilde{\kappa}_i\\
+    -\tilde{\vartheta}^T \tilde{Q} \tilde{\kappa} - \tilde{\vartheta}^T \tilde{S}^T\sum_{i=1}^d D_i^T\tilde{\kappa}_i - (B + \sum_{i=1}^d\tilde{\vartheta}_i^T D_i) (\tilde{S}\tilde{\kappa} + \tilde{R} \sum_{i=1}^d D_i^T \tilde{\kappa}_i) = 0, \numberthis \label{eq: dual_bsde_sol2}
+\end{align*}
+where $\tilde{\vartheta}, \tilde{\kappa}, \tilde{\vartheta}_i,$ and $\tilde{\kappa}_i$ can be found from the system \eqref{eq: dual_system_optimal_controls}:
+\begin{equation*}
+\begin{cases}
+     &\tilde{\varphi} Y + \tilde{\psi} - \tilde{Q}(\tilde{\vartheta} Y + \tilde{\kappa}) - \tilde{S}^T \bigg(B^T Y + \sum_{i=1}^d D_i^T (\tilde{\vartheta}_i Y + \tilde{\kappa}_i)\bigg)= 0\\
+    &\tilde{\varphi}( \tilde{\vartheta}_i Y +  \tilde{\kappa}_i) - C_i (\tilde{\varphi} Y + \tilde{\psi}) - D_i \tilde{S}(\tilde{\vartheta} Y + \tilde{\kappa}) - D_i \tilde{R}\bigg(B^T Y + \sum_{i=1}^d D_i^T (\tilde{\vartheta}_iY + \tilde{\kappa}_i)\bigg) = 0
+\end{cases}
+\end{equation*}
+and the terminal conditions are given by
+\begin{equation}
+    \tilde{\varphi}(T) = - G^{-1}(T), \quad \tilde{\psi}(T) = - G^{-1}(T) L(T). \label{eq: dual_bsde_terminal_conditions}
+\end{equation}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%% EQUIVALENCE DUAL HJB AND DUAL BSDE
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Equivalence between Dual HJB and Dual BSDE}
+From the dual HJB we get that the optimal controls $\alpha^\ast = \tilde{\vartheta}y + \tilde{\kappa}$ and $\beta^\ast = \tilde{\vartheta}_i y + \tilde{\kappa}_i$ are solution to the system of equations \eqref{eq: dual_hjb_system_controls}:
+\begin{equation*}
+\begin{cases}
+    &\tilde{P}y + \tilde{M} - \tilde{Q}(\tilde{\vartheta}y + \tilde{\kappa}) - \tilde{S}^T (B^T Y + \sum_{i=1}^d D_i^T (\tilde{\vartheta}_i y + \tilde{\kappa}_i)) = 0\\
+    &C_i (\tilde{P}y + \tilde{M}) - \tilde{P} (\tilde{\vartheta}_i y + \tilde{\kappa}_i)
+    + D_i \tilde{S}(\tilde{\vartheta}y + \tilde{\kappa}) + D_i\tilde{R}\bigg(B^T Y + \sum_{i=1}^d D_i^T (\tilde{\vartheta}_i y + \tilde{\kappa}_i)\bigg) = 0
+\end{cases} 
+\end{equation*}
+Similarly, the optimal controls from the dual BSDE method are found by solving the system \eqref{eq: dual_system_optimal_controls}: 
+\begin{equation*}
+\begin{cases}
+    &\tilde{\varphi} Y + \tilde{\psi} - \tilde{Q}(\tilde{\vartheta} Y + \tilde{\kappa}) - \tilde{S}^T \bigg(B^T Y + \sum_{i=1}^d D_i^T (\tilde{\vartheta}_i Y + \tilde{\kappa}_i)\bigg)= 0\\
+    &\tilde{\varphi}( \tilde{\vartheta}_i Y +  \tilde{\kappa}_i) - C_i (\tilde{\varphi} Y + \tilde{\psi}) - D_i \tilde{S}(\tilde{\vartheta} Y + \tilde{\kappa}) - D_i \tilde{R}\bigg(B^T Y + \sum_{i=1}^d D_i^T (\tilde{\vartheta}_iY + \tilde{\kappa}_i)\bigg) = 0  
+\end{cases} 
+\end{equation*}
+These systems are the same and therefore we get the relation
+\begin{equation*}
+    \tilde{\varphi} = \tilde{P}, \quad \tilde{\psi} = \tilde{M}.
+\end{equation*}
+The first ODE from the dual BSDE is \eqref{eq: dual_bsde_sol1}, so substituting $\tilde{P} = \tilde{\varphi}$ in it we get 
+\begin{align*}
+    \frac{\d \tilde{P}}{\d t} + \tilde{P} \tilde{\vartheta} - \tilde{P} A^T - \tilde{P} \sum_{i=1}^d C_i^T \tilde{\vartheta}_i + \tilde{\vartheta}^T \tilde{P} - A \tilde{P} -\sum_{i=1}^d \tilde{\vartheta}_i C_i \tilde{P} - \sum_{i=1}^d\tilde{\vartheta}_i^T\tilde{P} \tilde{\vartheta}_i - \tilde{\vartheta}^T \tilde{Q}\tilde{\vartheta}\\
+    - 2\tilde{\vartheta}^T \tilde{S}(B^T + \sum_{i=1}^d D_i^T \tilde{\vartheta}_i) - (B + \sum_{i=1}^d\tilde{\vartheta}_i^T D_i)\tilde{R} (B^T + \sum_{i=1}^d D_i^T \tilde{\vartheta}_i) = 0
+\end{align*}
+The first ODE from the dual HJB equation is given by \eqref{eq: dual_hjb_sol1}:
+\begin{align*}
+    \frac12 \frac{\d \tilde{P}}{\d t} + \tilde{\vartheta}^T \tilde{P} - A \tilde{P}  - \sum_{i=1}^d \tilde{\vartheta}_i^T C_i \tilde{P} + \frac12 \sum_{i=1}^d \tilde{\vartheta}_i^T \tilde{P} \tilde{\vartheta}_i - \frac12 \tilde{\vartheta}^T \tilde{Q}\tilde{\vartheta} - \tilde{\vartheta}^T \tilde{S}^T \big(B^T + \sum_{i=1}^d D_i^T \tilde{\vartheta}_i \big)\\
+    - \frac12 \bigg(B + \sum_{i=1}^d\tilde{\vartheta}_i^T D_i\bigg) \tilde{R} \bigg(B^T + \sum_{i=1}^d D_i^T \tilde{\vartheta}_i\bigg) = 0
+\end{align*}
+The two equations are equivalent with the second being the first one divided by $2$. Similarly, plugging in $\tilde{P} = \tilde{\varphi}$ and $\tilde{M} = \tilde{\psi}$ in \eqref{eq: dual_bsde_sol2} we get
+\begin{align*}
+    \frac{\d \tilde{M}}{\d t} + \tilde{P} \tilde{\kappa} - \tilde{P} \sum_{i=1}^d C_i^T \tilde{\kappa}_i + \tilde{\vartheta}^T \tilde{M} - A \tilde{M} - \sum_{i=1}^d \tilde{\vartheta}_i^T C_i \tilde{M} - \sum_{i=1}^d \tilde{\vartheta}_i^T \tilde{P} \tilde{\kappa}_i-\tilde{\vartheta}^T \tilde{Q} \tilde{\kappa} - \tilde{\vartheta}^T \tilde{S}^T\sum_{i=1}^d D_i^T\tilde{\kappa}_i\\
+    - (B + \sum_{i=1}^d\tilde{\vartheta}_i^T D_i) (\tilde{S}\tilde{\kappa} + \tilde{R} \sum_{i=1}^d D_i^T \tilde{\kappa}_i) = 0
+\end{align*}
+The respective ODE from the dual HJB is \eqref{eq: dual_hjb_sol2}:
+\begin{align*}
+    \frac{\d \tilde{M}}{\d t} + \tilde{P} \tilde{\kappa} - \tilde{P} \sum_{i=1}^d C_i^T \tilde{\kappa}_i + \tilde{\vartheta}^T \tilde{M} - A\tilde{M} - \sum_{i=1}^d \tilde{\vartheta}_i^T C_i \tilde{M} 
+    + \sum_{i=1}^d\tilde{\vartheta}_i a \tilde{\kappa}_i - \tilde{\vartheta}^T \tilde{Q} \tilde{\kappa} - \tilde{\vartheta}^T \tilde{S}^T \sum_{i=1}^d D_i^T \tilde{\kappa}_i\\
+    - \big(B + \sum_{i=1}^d\tilde{\vartheta}_i^T D_i \big)\tilde{S}\tilde{\kappa} - \big( B + \sum_{i=1}^d \tilde{\vartheta}_i^T D_i \big) \tilde{R} \sum_{i=1}^dD_i^T \tilde{\kappa}_i = 0
+\end{align*}
+The terminal conditions from the dual HJB method are given by \eqref{eq: dual_hjb_terminal_conditions}:
+\begin{equation*}
+    \tilde{P}(T) = -G^{-1}(T), \quad \tilde{M}(T) = - G^{-1}(T)L(T), \quad \tilde{N}(T) = \frac12 L^T(T)G^{-1}(T)L(T)
+\end{equation*}
+and from the dual BSDE, we have \eqref{eq: dual_bsde_terminal_conditions}:
+\begin{equation*}
+    \tilde{\varphi}(T) = - G^{-1}(T), \quad \tilde{\psi}(T) = - G^{-1}(T) L(T).
+\end{equation*}
+As we can see the equations are identical, and their terminal conditions are also the same, so the two methods are equivalent. 
+
+
+
+
+
+
+
+
+
+\newpage
+
+\section{Primal and Dual Equivalence}\label{Primal and Dual Equivalence}
+Recall that we have the relationship between the dual and primal value functions \eqref{eq: dual_primal_inequality}:
+\begin{equation*}
+    v(x) \le \inf_y \{x^T y - \Tilde{v}(y)  \}
+\end{equation*}
+In this section, we impose no constraints on the control, and we will show that this leads to equality instead of inequality in the above equation. Substituting the respective ansatz, we have
+\begin{equation*}
+    \frac12 x^T P x + x^T M + N = \inf_y \bigg\{ x^T y - \frac12 y^T \tilde{P} y - y^T \tilde{M} - \tilde{N}  \bigg\}
+\end{equation*}
+Setting the derivative of the RHS to zero, we get 
+\begin{equation*}
+    y = \tilde{P}^{-1}(x - \tilde{M}),
+\end{equation*}
+so
+\begin{equation*}
+    \frac12 x^T P x + x^T M + N  = - \frac12 (x^T - \tilde{M}^T)\tilde{P}^{-1} (x-\tilde{M}) - (x^T - \tilde{M}^T)\tilde{P}^{-1} \tilde{M} - \tilde{N} + x^T \tilde{P}^{-1}(x - \tilde{M})
+\end{equation*}
+Simplifying we get
+\begin{equation*}
+    \frac12 x^T P x + x^T M + N = \frac12 x^T \tilde{P}^{-1}x - x^T \tilde{P}^{-1}\tilde{M} + \frac12 \tilde{M}^T \tilde{P}^{-1} \tilde{M} - \tilde{N}.
+\end{equation*}
+Therefore, we get the relation
+\begin{equation}
+    P = \tilde{P}^{-1}, \quad M = -\tilde{P}^{-1} \tilde{M}, \quad N =  \frac12 \tilde{M}^T \tilde{P}^{-1} \tilde{M} - \tilde{N}. \label{eq: primal_dual_relationship}
+\end{equation}
+To simplify computations, we consider a simpler case where $d=1$ and $S = 0$. Then $\tilde{S}=0, \tilde{Q}= Q^{-1}, \tilde{R} = R^{-1}$.
+The Riccati equation from the primal problem in this case is given by \eqref{eq: primal_hjb_ricatti_1}
+\begin{equation*}
+     \dot{P}  +  2P A + 2P B \vartheta_1 + (C_1^T + \vartheta_1^T D_1^T)P(C_1 + D_1 \vartheta_1) 
+     -  Q -  \vartheta_1^T R \vartheta_1 = 0,
+\end{equation*}
+where 
+\begin{align*}
+    \vartheta_1 = ( D_1^T  P D_1 - R)^{-1} ( - B^T  P - D_1^T  P C_1 )
+\end{align*}
+Therefore, our equation becomes
+\begin{align*}
+    0 = \frac{\d P}{\d t} + 2 PA - Q + C_1^T P C_1 + 2 (P B + C_1^T P D_1) \vartheta_1 + \vartheta_1^T (D_1^T P D_1 - R)\vartheta_1\\
+    = \frac{\d P}{\d t} + 2 PA - Q + C_1^T P C_1 - (P B + C_1^T P D_1) ( D_1^T  P D_1 - R)^{-1} (B^T  P + D_1^T  P C_1 )
+\end{align*}
+Substituting $P = \tilde{P}^{-1}$, we get 
+\begin{align*}
+     \tilde{P}^{-1} \frac{\d \tilde{P}}{\d t} \tilde{P}^{-1} - 2 \tilde{P}^{-1} A + Q - C_1^T \tilde{P}^{-1} C_1 + (\tilde{P}^{-1} B + C_1^T \tilde{P}^{-1} D_1) ( D_1^T  \tilde{P}^{-1} D_1 - R)^{-1} (B^T  \tilde{P}^{-1} + D_1^T  \tilde{P}^{-1} C_1 ) = 0
+\end{align*}
+Multiplying on the left and on the right by $\tilde{P}$, we get 
+\begin{align*}
+    \frac{\d \tilde{P}}{\d t} - 2A\tilde{P} + \tilde{P}Q\tilde{P} - \tilde{P}C_1^T \tilde{P}^{-1} C_1\tilde{P} + \tilde{P}(\tilde{P}^{-1} B + C_1^T \tilde{P}^{-1} D_1) ( D_1^T  \tilde{P}^{-1} D_1 - R)^{-1} (B^T  \tilde{P}^{-1} + D_1^T  \tilde{P}^{-1} C_1 )\tilde{P} = 0 
+\end{align*}
+Rewriting this, we get 
+\begin{align*}
+    \frac{\d \tilde{P}}{\d t} - 2A\tilde{P} + \tilde{P}Q\tilde{P}  + \tilde{P}C_1^T (\Tilde{P}^{-1}D_1 (D_1^T \Tilde{P} D_1 - R)^{-1} D_1^T \Tilde{P}^{-1} - \tilde{P}^{-1} )C_1\tilde{P}+  B(D_1^T \Tilde{P} D_1 - R)^{-1}B^T \\
+    + 2B(D_1^T \Tilde{P} D_1 - R)^{-1} D_1^T \Tilde{P}^{-1} C_1 \Tilde{P}= 0 \numberthis \label{eq: equiv1}
+\end{align*}
+On the other hand, for the dual problem we have:
+\begin{align*}
+    \tilde{\vartheta} = Q \tilde{P}, \quad \tilde{\vartheta}_1 = (\tilde{P} - D_1 R^{-1} D_1^T)^{-1} (C_1 \tilde{P} + D_1 R^{-1}B^T)
+\end{align*}
+The dual Riccati equation is \eqref{eq: dual_hjb_sol1}:
+\begin{align*}
+   \frac{\d \tilde{P}}{\d t} + 2\tilde{\vartheta}^T \tilde{P} - 2A \tilde{P}  - 2\tilde{\vartheta}_1^T C_1 \tilde{P} + \tilde{\vartheta}_1^T \tilde{P} \tilde{\vartheta}_1 - \tilde{\vartheta}^T Q^{-1}\tilde{\vartheta} - (B + \tilde{\vartheta}_1^T D_1) R^{-1} (B^T + D_1^T \tilde{\vartheta}_1) = 0
+\end{align*}
+Substituting for $\tilde{\vartheta}$ we get
+\begin{align*}
+     \frac{\d \tilde{P}}{\d t} + \tilde{P}Q \tilde{P} -2 A \tilde{P}  - 2 \Tilde{P} C_1^T\tilde{\vartheta}_1 +  \tilde{\vartheta}_1^T \tilde{P} \tilde{\vartheta}_1
+    - (B +\tilde{\vartheta}_1^T D_1) R^{-1} (B^T + D_1^T \tilde{\vartheta}_1) = 0
+\end{align*}
+Substituting for $\tilde{\vartheta}_1$ we get 
+\begin{align*}
+    0 = \frac{\d \tilde{P}}{\d t} + \tilde{P}Q \tilde{P} -2 A \tilde{P}  - 2 \Tilde{P} C_1^T\tilde{\vartheta}_1 +  \tilde{\vartheta}_1^T \tilde{P} \tilde{\vartheta}_1
+    - (B +\tilde{\vartheta}_1^T D_1) R^{-1} (B^T + D_1^T \tilde{\vartheta}_1)\\
+    =\frac{\d \tilde{P}}{\d t} + \tilde{P}Q \tilde{P} -2 A \tilde{P}  - 2 \Tilde{P} C_1^T\tilde{\vartheta}_1 +  \tilde{\vartheta}_1^T \tilde{P} \tilde{\vartheta}_1
+    - B R^{-1}B^T - 2 B R^{-1} D_1^T \tilde{\vartheta}_1 - \tilde{\vartheta}_1^T D_1 R^{-1} D_1^T \tilde{\vartheta}_1\\
+    =\frac{\d \tilde{P}}{\d t} + \tilde{P}Q \tilde{P} -2 A \tilde{P}  
+    - B R^{-1}B^T - 2 (B R^{-1} D_1^T + \Tilde{P} C_1^T)\tilde{\vartheta}_1 + \tilde{\vartheta}_1^T (\Tilde{P} - D_1 R^{-1} D_1^T) \tilde{\vartheta}_1\\
+    = \frac{\d \tilde{P}}{\d t} + \tilde{P}Q \tilde{P} -2 A \tilde{P}  
+    - B R^{-1}B^T -  (B R^{-1} D_1^T + \Tilde{P} C_1^T)(\tilde{P} - D_1 R^{-1} D_1^T)^{-1} (C_1 \tilde{P} + D_1 R^{-1}B^T)
+\end{align*}
+This is then rewritten as 
+\begin{align*}
+    \frac{\d \Tilde{P}}{\d t} - 2 A \Tilde{P} + \Tilde{P} Q \Tilde{P} + \Tilde{P} C_1^T (D_1 R^{-1} D_1^T - \Tilde{P})^{-1} C_1 \Tilde{P} + 2 B R^{-1} D_1^T (D_1 R^{-1} D_1^T - \Tilde{P})^{-1} C_1 \Tilde{P}\\
+    + B (R^{-1}D_1^T (D_1 R^{-1}D_1^T - \Tilde{P})^{-1} D_1 R^{-1} - R^{-1}) B^T 
+     = 0 \numberthis \label{eq: equiv2}
+\end{align*}
+Now noting that
+\begin{align*}
+    (D_1 R^{-1} D_1^T - \Tilde{P})^{-1} = \Tilde{P}^{-1}D_1 (D_1^T \Tilde{P} D_1 - R)^{-1} D_1^T \Tilde{P}^{-1} - \tilde{P}^{-1} \\
+    R^{-1}D_1^T (D_1 R^{-1}D_1^T - \Tilde{P})^{-1} D_1 R^{-1} - R^{-1} = D_1^T \Tilde{P} D_1 - R\\
+    R^{-1} D_1^T (D_1 R^{-1} D_1^T - \Tilde{P})^{-1}= (D_1^T \Tilde{P} D_1 - R)^{-1} D_1^T \Tilde{P}^{-1}
+\end{align*}
+we get exactly \eqref{eq: equiv1}, so the dual and primal HJB methods are equivalent. 
+

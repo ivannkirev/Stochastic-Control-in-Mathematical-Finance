@@ -1,12 +1,12 @@
 \chapter{Framework}
 
-\section{Unconstrained non-Markovian Case}
+\section{Unconstrained Case}
 
 We consider a control model where the state of the system is governed by a stochastic differential equation (SDE) valued in $\R^n$:
 \begin{equation}
-    \mathrm{d}X^\pi(t) = b(t, X^\pi(t), \pi(t)) \, \mathrm{d}t + \sigma(t, X^\pi(t), \pi(t)) \, \d \bm{W} (t), \label{eq: state_process_primal}
+    \mathrm{d}X^\pi(t) = b(t, X^\pi(t), \pi(t)) \, \mathrm{d}t + \sigma(t, X^\pi(t), \pi(t)) \, \d W (t), \label{eq: state_process_primal}
 \end{equation}
-where $\bm{W}(t)$ is a $d-$dimensional Brownian motion on a filtered probability space $(\Omega, \mathcal{F}, \mathbb{F} = \{\mathcal{F}_t\}_{t \in [0,T]}, \mathbb{P})$. The control $\pi(t)$ is a progressively measurable process with respect to $\mathbb{F}$, taking values in $\mathbb{R}^m$.
+where $W(t)$ is a $d-$dimensional Brownian motion on a filtered probability space $(\Omega, \mathcal{F}, \mathbb{F} = \{\mathcal{F}_t\}_{t \in [0,T]}, \mathbb{P})$. The control $\pi(t)$ is a progressively measurable process with respect to $\mathbb{F}$, taking values in $\mathbb{R}^m$.
 
 We fix a finite time horizon \( 0 < T < \infty \) and define the set of admissible controls:
 \begin{equation*}
@@ -268,3 +268,7 @@ Then $h(y)$ is given by
 \end{align*}
 
 \end{proof}
+
+\section{Unconstrained Markovian Case}
+
+\section{Constrained Case}

@@ -7,7 +7,7 @@ For simplicity, we will consider the case where $d=1$, i.e. we work with one-dim
 
 
 
-\subsection{Primal Problem for 1-Dimensional Brownian Motion Case}
+\section{Primal Problem for 1-Dimensional Brownian Motion Case}
 Recall that the value function for the primal problem is given by
 \begin{equation*}
     v(t, x) = \frac12 x^T P x + x^T M + N,
@@ -28,7 +28,7 @@ and the terminal conditions are given by \eqref{eq: primal_hjb_terminal_conds}:
     P(T) = -G(T), \quad M(T) = - L(T), \quad N(T) = 0.
 \end{equation}
 
-\subsection{Dual Problem for for 1-Dimensional Brownian Motion Case}
+\section{Dual Problem for for 1-Dimensional Brownian Motion Case}
 The value function for the dual problem is given by 
 \begin{equation*}
     \Tilde{v}(t, y) = \frac12 y^T \Tilde{P} y + y^T \Tilde{M} + \Tilde{N},
@@ -55,7 +55,7 @@ and the terminal conditions are given by \eqref{eq: dual_hjb_terminal_conditions
     \tilde{P}(T) = -G^{-1}(T), \quad \tilde{M}(T) = - G^{-1}(T)L(T), \quad \tilde{N}(T) = - \frac12 L^T(T)G^{-1}(T)L(T).
 \end{equation*}
 
-\subsection{Runge-Kutta Method}
+\section{Runge-Kutta Method}
 Next, we will describe the method employed to resolve the two systems of ordinary differential equations (ODEs). For ease of understanding, let's set $n=2$, which implies that $X$ exists within a two-dimensional space. We also assume the coefficients $A(t), B(t), C(t), D(t)$ to be time-independent, meaning they're constant, and we further take them to be symmetric.\\
 
 Our initial focus lies on the equations for $P$ and $\tilde{P}$. The solution to these ODEs is achieved via the Runge-Kutta method. It's important to highlight that in our situation, both $P$ and $\tilde{P}$ are represented as $2 \times 2$ matrices. We omit the details of the method, as it is a widely-used approach for solving such ODEs.\\

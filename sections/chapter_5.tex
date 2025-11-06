@@ -2,8 +2,8 @@
 
 In this section, we return to the framework of Chapter \ref{Unconstrained Optimisation with Quadratic Running Cost}, however, now we impose constraints on the control and no longer consider quadratic cost functions. This general framework is as described in \cite{Duality_Method_for_Multidimensional_Nonsmooth_Constrained_Linear_Convex_Stochastic_Control}. In this case, we no longer have an analytical solution to the problem, however, we can derive a useful dual-primal relationship, which will help us later with implementing the Deep BSDE algorithm. 
 
-\subsection{Primal and Dual HJB \texorpdfstring{$\&$ } BBSDE Methods}
-\subsubsection{Primal HJB Equation}
+\section{Primal and Dual HJB \texorpdfstring{$\&$ } BBSDE Methods}
+\subsection{Primal HJB Equation}
 The HJB equation is the same as in section \ref{Derivation of HJB equation} (derivation taken from \cite{Pham}), except that the supremum is taken over the set $K$ instead of the whole space $\R^m$. Similar to the unconstrained case, we define the value function $v: [t_0, T] \times \R^n \to \R$ as
 \begin{equation*}
     v(t,X(t)) = \sup_{\pi \in K} \E \bigg[ \int_{t_0}^T - f(t, X(t), \pi(t)) \d t - g(X(T))  \bigg]
@@ -28,7 +28,7 @@ and the terminal condition is given by:
 %%%%%%%%%%%%%%%%% PRIMAL BSDE %%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsubsection{Primal BSDE}
+\subsection{Primal BSDE}
 This section is adapted from \cite{Duality_Method_for_Multidimensional_Nonsmooth_Constrained_Linear_Convex_Stochastic_Control}. Proofs and details of the Stochastic Maximum Principle can be found in \cite{The_Stochastic_Maximum_Principle_for_Linear_Convex_Optimal_Control_with_Random_Coefficients}. To state the SMP, we need the following assumption:\\
 
 Let $(\hat{X}, \hat{\pi})$ be admissible pair satisfying 
@@ -68,7 +68,7 @@ for $(\mathbb{P} \, \otimes \, Leb)-a.e.$ $(\omega, t) \in \Omega \times [t_0, T
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%% DUAL HJB %%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Dual HJB Equation}
+\subsection{Dual HJB Equation}
 Recall that the dual process $Y(t)$ satisfies the SDE \eqref{eq: constrained_y_sde}:
 \begin{equation*}
     \begin{cases}
@@ -119,7 +119,7 @@ Then the HJB equation is given by
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%% DUAL BSDE %%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Dual BSDE}
+\subsection{Dual BSDE}
 This section is once again adapted from \cite{Duality_Method_for_Multidimensional_Nonsmooth_Constrained_Linear_Convex_Stochastic_Control}. To state the Stochastic Maximum Principle for the dual problem, we need a similar assumption to that of the primal problem:\\
 
 Let $(\hat{Y}, \hat{\alpha}, \hat{\beta}_1)$ be a given admissible dual pair. For any admissible pair $(Y, \alpha, \beta_1)$, there exists $Z \in \mathcal{P}([t_0, T], \R)$ and an $\mathcal{F}_T$-measurable random variable $\Tilde{Z}$ satisfying $\E \int_{t_0}^T |Z(t)| \d t < \infty$, $\E |\Tilde{Z}| < \infty$ such that
@@ -184,7 +184,7 @@ The Stochastic Maximum Principle for the process \eqref{eq: constrained_y_sde_2}
 for $(\mathbb{P} \otimes Leb) - a.e.$ $(\omega, t) \in \Omega \times [t_0, T]$, where $\partial \phi(\hat{\alpha}(t), \hat{\beta}(t))$ is the sub-differential of $\phi$ at $(\hat{\alpha}(t), \hat{\beta}(t))$.
 
 \newpage
-\subsection{Primal-Dual Relation}
+\section{Primal-Dual Relation}
 In this section, we state some results on the dual-primal relation. We need to assume that the function $D_x[g](\omega, \cdot) : \R^n \to \R^n$ is a bijection for any $\omega$ such that $z = - D_x[g(x)]$ if and only if $x = -D_y[h(z)]$, that is, the inverse function of $-D_x[g]$ is $-D_y[h]$.\\
 
 We first show how we can recover the primal optimal solution from that of the dual problem. Proof of this statement can be found in \cite{Duality_Method_for_Multidimensional_Nonsmooth_Constrained_Linear_Convex_Stochastic_Control}.\\

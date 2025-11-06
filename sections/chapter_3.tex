@@ -3,8 +3,8 @@
 The development of this section draws upon the study "Weak Necessary and Sufficient SMP for Markovian Regime-Switching Diffusion Models" \cite{Weak_Necessary_and_Sufficient_SMP_for_Markovian_Regime-Switching_Diffusion_Models}. This research elucidates the stochastic maximum principle for Markovian regime-switching diffusion models. We further consider the PDE method using the Hamilton-Jacobi-Bellman equation described in \cite{Pham}. We integrate these concepts into the framework of Chapter 1, focusing specifically on the multidimensional linear quadratic unconstrained control problem. In this case, we are able to derive analytical solutions to our problem, as shown in the following sections.
 
 
- \subsection{Primal HJB Equation}
-\subsubsection{Deriving the Primal HJB}
+ \section{Primal HJB Equation}
+\subsection{Deriving the Primal HJB}
 We transform the minimisation problem \eqref{eq: markov_minimisation_problem} to maximisation by noting that
 \begin{equation*}
     \inf_{\pi} \E \bigg[ \int_{t_0}^T f(t, X(t), \pi(t), \eta(t)) \d t + g(X(T), \eta(T)) \bigg] = - \sup_{\pi} \E \bigg[ \int_{t_0}^T -f(t, X(t), \pi(t), \eta(t)) \d t - g(X(T), \eta(T)) \bigg]
@@ -21,7 +21,7 @@ with terminal conditions
 \begin{equation*}
     v(T, x, i) = - g(x, i) = - \frac{1}{2} x^T G(T, i) x + x^T L(T, i).
 \end{equation*}
-\subsubsection{Finding the Optimal Control}
+\subsection{Finding the Optimal Control}
 The supremum can be found by setting the derivative with respect to $\pi$ to zero. The derivative of the generator $\mathcal{L}^{\pi}$, $D_\pi [\mathcal{L}^\pi]  \in \R^m$, is given by:
 \begin{equation}
     D_{\pi} \big[ \mathcal{L}^{\pi}[v(t, x, i)]\big] = D_{\pi} \big[ b(t,x, \pi, i)^T D_x[v(t,x, i)] \big] + D_\pi \bigg[ \frac12 \tr (\sigma(t, x,\pi, i) \sigma^T(t, x, \pi, i) D^2_x[v(t,x, i)])\bigg]. \label{eq: markov_generator_derivative}
@@ -76,7 +76,7 @@ where $\pi^\ast$ is as in \eqref{eq: markov_control_optimal_primal_hjb} and the 
 \begin{equation*}
     v(T, x, i) = - g(x, i) = - \frac12 x^T G(T, i) x - x^T L(T, i). 
 \end{equation*}
-\subsubsection{Solving the HJB equation}
+\subsection{Solving the HJB equation}
 We solve \eqref{eq: markov_hjb_primal} using the ansatz
 \begin{equation}
     v(t,x,i) = \frac12 x^T P(t,i) x + x^T M(t,i) + N(t, i)
@@ -141,8 +141,8 @@ with terminal conditions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%  PRIMAL BSDE   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newpage 
-\subsection{Primal BSDE}
-\subsubsection{Solution via the Primal BSDE}
+\section{Primal BSDE}
+\subsection{Solution via the Primal BSDE}
 Recall that the SDE \eqref{eq: markov_sde} describing the state process is given by
 \begin{equation}
     \begin{cases}
@@ -258,7 +258,7 @@ with terminal conditions
 \begin{equation}
     \varphi(T, i) = - G(T,i) ,\quad \psi(T,i) = - L(T,i). \label{eq: markov_bsde_terminal}
 \end{equation}
-\subsubsection{Equivalence of Primal HJB and Primal BSDE}
+\subsection{Equivalence of Primal HJB and Primal BSDE}
 The optimal control from the primal HJB was given by \eqref{eq: markov_optimal_control_final}:
 \begin{equation*}
     \pi^\ast = \bigg[\sum_{j=1}^d D_j^T(t,i) P D_j(t,i) - R(t,i)\bigg]^{-1} \bigg[S(t,i) x - \sum_{j=1}^d D_j^T(t,i) P C_j(t,i) x - B^T(t,i) P x - B^T(t,i) M \bigg]
@@ -309,8 +309,8 @@ As we can see, the terminal conditions are the same, so we can conclude that the
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%  DUAL HJB   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  \newpage
-\subsection{Dual HJB Equation}
-\subsubsection{The dual HJB}
+\section{Dual HJB Equation}
+\subsection{The dual HJB}
 The dual HJB is given by
 \begin{align*}
     0 = \frac{\partial v}{\partial t}(t, y, i) + \sup_{\alpha, \beta, \gamma} \bigg\{ 
@@ -324,7 +324,7 @@ with terminal condition
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%% OPTIMAL CONTROLS %%%%%%%%%%%%%%%%%%%%%%%%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsubsection{Finding the optimal control}
+\subsection{Finding the optimal control}
 We find the optimal controls $\alpha, \beta_1, \dots, \beta_d$ by setting the derivatives with respect to $\alpha$ and $\beta_j$ to zero:
 \begin{align}
     &D_y[\tilde{v}] - \tilde{Q}\alpha - \tilde{S}^T (B^T y + \sum_{i=1}^d D_i^T \beta_i) = 0 \label{eq: markov_primal_controls_system1}\\
@@ -338,7 +338,7 @@ This is a system of $d+1$ equations in $d+1$ unknowns, so it can be solved and t
     + \frac12 \sum_{j=1}^d {\beta_j^\ast}^T D_y^2[v(t,y,i)]\beta_j^\ast
     - \phi \big(t, \alpha^\ast, B^T y + \sum_{j=1}^d D_j^T \beta_j^\ast  \big) + \sum_{j \ne i}^k q_{ij} v(t, y+\gamma_j - \gamma_i, j)\bigg\} \numberthis \label{eq: markov_hjb_optimal_controls}
 \end{align*}
-\subsubsection{Solving the dual HJB}
+\subsection{Solving the dual HJB}
 Suppose that $\tilde{v}$ is a quadratic function in $y$ and use the ansatz
 \begin{equation}
     \tilde{v}(t,y, i) = \frac12 y^T \tilde{P}(t,i) y + y^T \tilde{M}(t,i) + \tilde{N}(t,i),
@@ -433,8 +433,8 @@ and the terminal conditions are given by \eqref{eq: markov_dual_terminal_conditi
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%  DUAL BSDE   %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  \newpage
-\subsection{Dual BSDE}
-\subsubsection{Solution via the Dual BSDE}
+\section{Dual BSDE}
+\subsection{Solution via the Dual BSDE}
 Recall that the SDE \eqref{eq: markov_sde_y} describing the state process is given by
 \begin{align*}
     &\d Y = \bigg[ \alpha(t) - A(t,\eta(t-))^T Y(t) - \sum_{j=1}^d C_j^T(t,\eta(t-)) \beta_j(t)) \bigg]\d t + \sum_{j=1}^d \beta_j(t) \d W_j(t) + \sum_{j=1}^k \gamma_j(t) \d M_j(t)\\
@@ -564,7 +564,7 @@ with terminal conditions given by
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-\subsubsection{Equivalence of Dual HJB and Dual BSDE}
+\subsection{Equivalence of Dual HJB and Dual BSDE}
 From the dual HJB we get that the controls are given by $\alpha^\ast = \Tilde{\vartheta} y + \Tilde{\kappa}$ and $\beta^\ast_j = \tilde{\vartheta}_j y + \Tilde{\kappa}_j$, which can be computed from the system of equations \eqref{eq: markov_primal_controls_system1} and \eqref{eq: markov_primal_controls_system2}:
 \begin{align*}
     &\Tilde{P}(t,i) y + \Tilde{M}(t,i)  - \tilde{Q}(t,i) \alpha - \tilde{S}^T(t,i) \bigg(B^T(t,i) y + \sum_{j=1}^d D_j^T(t,i) \beta_j\bigg) = 0 \\
@@ -634,7 +634,7 @@ As we can see the equations are identical, and their terminal conditions are als
 the two methods are equivalent.
 
 \newpage
-\subsection{Primal and Dual Equivalence}
+\section{Primal and Dual Equivalence}
 This section shows equivalence between the primal HJB and dual HJB solutions. Recall that we have the relation between the dual and primal value functions \eqref{eq: markov_dual_primal_inequality}:
 \begin{equation*}
     v(t,x,i) \le \inf_y \{x^T y - \Tilde{v}(t,y,i)  \}

@@ -1,10 +1,10 @@
-\section{The Deep Controlled 2BSDE Method} \label{sec:2bsde}
+\chapter{The Deep Controlled 2BSDE Method} \label{sec:2bsde}
 In this section, we adapt the results from \cite{Deep_Learning_for_Constrained_Utility_Maximisation}. We first state the main results and then apply the algorithm for the unconstrained case described in chapter \ref{Unconstrained Optimisation with Quadratic Running Cost}, in which we know the theoretical optimal control, with the purpose of verifying the results from the deep controlled 2BSDE method. \\
 
 The algorithm was developed mainly following the idea from \cite{Deep_Learning_for_Constrained_Utility_Maximisation} as well as \cite{Machine_Learning_Approximation_Algorithms}. The code was written from scratch, as the first paper only provides a pseudo-code and the second one utilises an older version of \verb|tensorflow|, but the ideas are similar, with adaptations to our specific problem. The code for this project can be found at \cite{kirev2023github}.
 
 
-\subsection{Description of Algorithm}
+\section{Description of Algorithm}
 %We work in the framework described in Chapter \ref{sec: general}. Recall that the HJB equation for the primal problem was given by
 %\begin{equation*}
 %    \frac{\partial}{\partial t} v(t,x) = - \sup_{\pi \in K} F(t, x, \pi, D_x[v(t,x)], D_x^2[v(t,x)]),
@@ -82,7 +82,7 @@ Since we want to maximise the Hamiltonian $F$ w.r.t. $\pi$, we minimise the squa
 
 
 
-\subsection{Applying the Algorithm to the Unconstrained Case}
+\section{Applying the Algorithm to the Unconstrained Case}
 We perform the Deep Controlled 2BSDE algorithm using \verb|tensorflow| for the case where the control is unconstrained and the problem is quadratic, i.e. the framework of chapter \ref{Unconstrained Optimisation with Quadratic Running Cost}. We do this because we know the analytical solution for this problem and want to compare the two methods to verify the Deep Controlled 2BSDE method. \\
 
 We iterate the steps described above until the loss functions have converged. We use constant values for the parameters of the model, so that $A, B, C, D, Q ,R, S, G, L$ are not dependent on time (for simplicity). We take the learning rate for the BSDE step to be larger than the learning rate for the control step, ensuring that the loss functions converge. \\
@@ -96,14 +96,14 @@ The image on the left represents the loss $L_1$, corresponding to the terminal c
 
     
 
-\subsubsection*{Extending the Algorithm to the Dual Problem}
+\subsection*{Extending the Algorithm to the Dual Problem}
 As described in \cite{Deep_Learning_for_Constrained_Utility_Maximisation}, this algorithm can be extended to the dual problem. We perform the algorithm for our problem, and show the loss functions for the dual problem:
 %\begin{center}
 %    \includegraphics[width=\textwidth]{figures/dual_losses.png}
 %\end{center}
 For the control loss, we have plotted the derivative of the loss function $L_3$ with respect to $y$. We have used learning rates of $10^{-2}$ and $10^{-3}$ for the respective losses. \\
 
-\subsection{Verifying Results with Analytical Solution}
+\section{Verifying Results with Analytical Solution}
 Now that we have both the primal and dual solutions from the Deep BSDE algorithm, we compare the results with the analytical solution. In chapter \ref{sec: Numerical Solutions} we described how to solve the systems of ODEs for the primal and dual problem using the Runge-Kutta numerical scheme, giving us the solutions to the unconstrained quadratic case.\\
 
 For a given simulation of the process $X_t$, we can compute the analytical solution to the value function for this problem using the results form \ref{sec: Numerical Solutions}, and plot them together with the results from the Deep BSDE method. We get the following results:
@@ -118,7 +118,7 @@ Next, we recall that we can obtain the optimal control from \eqref{eq: pi_from_d
 %\end{center}
 Once again, all three algorithms show relatively close results.
 
-\subsection{Further Work}
+\section{Further Work}
 With the successful demonstration that the Deep BSDE algorithm is capable of producing results congruent with those derived analytically, we find ourselves in a position to extend its application to scenarios of increased complexity. In these scenarios, achieving analytical results following conventional methods may not be feasible.\\
 
 Our primary focus of interest is instances where the application of control is subject to limitations. In such situations, it's generally infeasible to use traditional methods to derive the optimal control analytically. This limitation presents us with the opportunity to exploit the capabilities of our Deep BSDE algorithm to its full potential, providing a practical alternative to conventional analytical methods.\\
